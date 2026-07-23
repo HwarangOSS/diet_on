@@ -6,9 +6,9 @@ This script tests the newly implemented features to ensure they work correctly.
 """
 
 import os
+import shutil
 import sys
 import tempfile
-import shutil
 from pathlib import Path
 
 # Add project root to path
@@ -23,8 +23,8 @@ def test_duplicate_finder():
     print("=" * 60)
 
     try:
-        from diskcleaner.core.scanner import FileInfo
         from diskcleaner.core.duplicate_finder import DuplicateFinder
+        from diskcleaner.core.scanner import FileInfo
 
         # Create test files in temp directory
         temp_dir = tempfile.mkdtemp(prefix="diskcleaner_test_")
@@ -99,6 +99,7 @@ def test_duplicate_finder():
     except Exception as e:
         print(f"[!] Error testing duplicate finder: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -192,6 +193,7 @@ def test_growth_analyzer():
     except Exception as e:
         print(f"[!] Error testing growth analyzer: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -244,6 +246,7 @@ def test_scripts():
     except Exception as e:
         print(f"[!] Error testing scripts: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

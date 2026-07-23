@@ -37,8 +37,9 @@ repos:
     rev: 6.0.0
     hooks:
       - id: flake8
+        additional_dependencies: ["Flake8-pyproject"]
         args: ['--max-line-length=100', '--extend-ignore=E203,E231,W503']
-        exclude: '^examples/'
+        exclude: ^skills/disk-cleaner/
 
   # Type checking - temporarily disabled due to extensive type annotation work needed
   # - repo: https://github.com/pre-commit/mirrors-mypy

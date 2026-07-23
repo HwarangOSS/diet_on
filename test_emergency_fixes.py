@@ -7,8 +7,8 @@ This script tests all P0 emergency fixes:
 3. Chinese output removal (0 Chinese chars)
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add skills path to Python path
@@ -33,7 +33,9 @@ try:
     log_locations = platform.get_log_locations()
     docker_locations = platform.get_docker_locations()
 
-    total_paths = len(cache_locations) + len(temp_locations) + len(log_locations) + len(docker_locations)
+    total_paths = (
+        len(cache_locations) + len(temp_locations) + len(log_locations) + len(docker_locations)
+    )
 
     print(f"  Cache locations: {len(cache_locations)}")
     print(f"  Temp locations:  {len(temp_locations)}")
@@ -68,27 +70,27 @@ try:
     # Check the script file directly
     analyze_disk_script = skill_path / "scripts" / "analyze_disk.py"
 
-    with open(analyze_disk_script, 'r', encoding='utf-8') as f:
+    with open(analyze_disk_script, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Check for new default values
-    if 'self.max_files = max_files if max_files is not None else 500000' in content:
+    if "self.max_files = max_files if max_files is not None else 500000" in content:
         print(f"  [PASS] File limit updated to 500,000")
     else:
         print(f"  [FAIL] File limit not updated correctly")
 
-    if 'self.max_seconds = max_seconds if max_seconds is not None else 120' in content:
+    if "self.max_seconds = max_seconds if max_seconds is not None else 120" in content:
         print(f"  [PASS] Time limit updated to 120 seconds")
     else:
         print(f"  [FAIL] Time limit not updated correctly")
 
     # Check for new parameters
-    if '--deep-scan' in content:
+    if "--deep-scan" in content:
         print(f"  [PASS] --deep-scan parameter added")
     else:
         print(f"  [FAIL] --deep-scan parameter missing")
 
-    if '--include-windows' in content:
+    if "--include-windows" in content:
         print(f"  [PASS] --include-windows parameter added")
     else:
         print(f"  [FAIL] --include-windows parameter missing")
@@ -119,11 +121,11 @@ for script_name in script_files:
     script_path = skill_path / "scripts" / script_name
 
     try:
-        with open(script_path, 'r', encoding='utf-8') as f:
+        with open(script_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Count Chinese characters (Unicode range for CJK)
-        chinese_chars = sum(1 for char in content if '\u4e00' <= char <= '\u9fff')
+        chinese_chars = sum(1 for char in content if "\u4e00" <= char <= "\u9fff")
 
         if chinese_chars > 0:
             files_with_chinese.append((script_name, chinese_chars))
@@ -149,13 +151,16 @@ print("[TEST 4] Module Import Test")
 print("-" * 70)
 
 try:
-    from diskcleaner.platforms import WindowsPlatform, LinuxPlatform, MacOSPlatform
+    from diskcleaner.platforms import LinuxPlatform, MacOSPlatform, WindowsPlatform
+
     print(f"  [PASS] Platform modules imported successfully")
 
     from diskcleaner.core import DirectoryScanner
+
     print(f"  [PASS] DirectoryScanner imported successfully")
 
     from diskcleaner.core import FileClassifier
+
     print(f"  [PASS] FileClassifier imported successfully")
 
 except ImportError as e:
@@ -174,10 +179,12 @@ try:
     cache_locations = platform.get_cache_locations()
 
     # Categorize paths
-    chrome_paths = [p for p in cache_locations if 'Chrome' in p]
-    edge_paths = [p for p in cache_locations if 'Edge' in p]
-    jetbrains_paths = [p for p in cache_locations if 'JetBrains' in p]
-    dev_paths = [p for p in cache_locations if any(x in p for x in ['npm', 'yarn', 'pip', 'gradle', 'maven'])]
+    chrome_paths = [p for p in cache_locations if "Chrome" in p]
+    edge_paths = [p for p in cache_locations if "Edge" in p]
+    jetbrains_paths = [p for p in cache_locations if "JetBrains" in p]
+    dev_paths = [
+        p for p in cache_locations if any(x in p for x in ["npm", "yarn", "pip", "gradle", "maven"])
+    ]
 
     print(f"  Chrome cache paths:   {len(chrome_paths)}")
     print(f"  Edge cache paths:     {len(edge_paths)}")

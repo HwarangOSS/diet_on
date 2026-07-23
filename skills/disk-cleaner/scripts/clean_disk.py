@@ -43,7 +43,10 @@ except Exception as e:
     except ImportError:
         PROGRESS_AVAILABLE = False
         ProgressBar = None
-        print(f"[Warning] Cannot import diskcleaner module, some features unavailable: {e}", file=sys.stderr)
+        print(
+            f"[Warning] Cannot import diskcleaner module, some features unavailable: {e}",
+            file=sys.stderr,
+        )
 
 
 class DiskCleaner:

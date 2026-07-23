@@ -31,7 +31,7 @@ def test_cache_detection():
         for i, loc in enumerate(cache_locations, 1):
             # Encode to ASCII-safe representation
             try:
-                ascii_path = loc.encode('ascii', errors='replace').decode('ascii')
+                ascii_path = loc.encode("ascii", errors="replace").decode("ascii")
             except:
                 ascii_path = "<path encoding error>"
             print(f"    {i}. {ascii_path}")
@@ -47,7 +47,7 @@ def test_cache_detection():
         print(f"  Found {len(temp_locations)} temp locations:")
         for i, loc in enumerate(temp_locations, 1):
             try:
-                ascii_path = loc.encode('ascii', errors='replace').decode('ascii')
+                ascii_path = loc.encode("ascii", errors="replace").decode("ascii")
             except:
                 ascii_path = "<path encoding error>"
             print(f"    {i}. {ascii_path}")
@@ -63,7 +63,7 @@ def test_cache_detection():
         print(f"  Found {len(log_locations)} log locations:")
         for i, loc in enumerate(log_locations, 1):
             try:
-                ascii_path = loc.encode('ascii', errors='replace').decode('ascii')
+                ascii_path = loc.encode("ascii", errors="replace").decode("ascii")
             except:
                 ascii_path = "<path encoding error>"
             print(f"    {i}. {ascii_path}")
@@ -79,7 +79,7 @@ def test_cache_detection():
         print(f"  Found {len(docker_locations)} Docker locations:")
         for i, loc in enumerate(docker_locations, 1):
             try:
-                ascii_path = loc.encode('ascii', errors='replace').decode('ascii')
+                ascii_path = loc.encode("ascii", errors="replace").decode("ascii")
             except:
                 ascii_path = "<path encoding error>"
             print(f"    {i}. {ascii_path}")
@@ -92,7 +92,9 @@ def test_cache_detection():
     print(f"  Temp locations:  {len(temp_locations)}")
     print(f"  Log locations:   {len(log_locations)}")
     print(f"  Docker locations: {len(docker_locations)}")
-    print(f"  Total:           {len(cache_locations) + len(temp_locations) + len(log_locations) + len(docker_locations)}")
+    print(
+        f"  Total:           {len(cache_locations) + len(temp_locations) + len(log_locations) + len(docker_locations)}"
+    )
     print("=" * 60)
 
     # Check for expected cache types

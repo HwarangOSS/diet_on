@@ -27,9 +27,9 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from diskcleaner.config import Config
 from diskcleaner.core.interactive import InteractiveCleanupUI
-from diskcleaner.core.progress import ProgressBar, IndeterminateProgress
+from diskcleaner.core.progress import IndeterminateProgress, ProgressBar
 from diskcleaner.core.scanner import DirectoryScanner
-from diskcleaner.core.smart_cleanup import SmartCleanupEngine, CleanupReport
+from diskcleaner.core.smart_cleanup import CleanupReport, SmartCleanupEngine
 
 
 class InteractiveWizard:
@@ -96,6 +96,7 @@ class InteractiveWizard:
         except Exception as e:
             print(f"\n错误: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -312,10 +313,7 @@ class InteractiveWizard:
     def _show_scan_summary(self, report: CleanupReport, scanner: DirectoryScanner):
         """Display scan summary."""
         total_files = sum(len(files) for files in report.by_type.values())
-        total_size = sum(
-            sum(f.size for f in files)
-            for files in report.by_type.values()
-        )
+        total_size = sum(sum(f.size for f in files) for files in report.by_type.values())
 
         print("\n" + "=" * 60)
         print("   扫描完成")
@@ -384,9 +382,7 @@ class InteractiveWizard:
         # Count by type
         print("\n按类型 (前5):")
         type_items = sorted(
-            report.by_type.items(),
-            key=lambda x: sum(f.size for f in x[1]),
-            reverse=True
+            report.by_type.items(), key=lambda x: sum(f.size for f in x[1]), reverse=True
         )[:5]
         for category, files in type_items:
             size = sum(f.size for f in files)
@@ -402,9 +398,9 @@ class InteractiveWizard:
     def _get_risk_emoji(self, risk: str) -> str:
         """Get emoji for risk level (for agent reports only)."""
         emojis = {
-            "safe": "OK",       # Green
+            "safe": "OK",  # Green
             "confirm_needed": "!",  # Yellow
-            "protected": "X",   # Red
+            "protected": "X",  # Red
         }
         return emojis.get(risk, "?")
 
@@ -542,14 +538,9 @@ def main():
     """Main entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Interactive wizard for disk cleanup"
-    )
+    parser = argparse.ArgumentParser(description="Interactive wizard for disk cleanup")
     parser.add_argument(
-        "path",
-        nargs="?",
-        default=".",
-        help="Path to analyze (default: current directory)"
+        "path", nargs="?", default=".", help="Path to analyze (default: current directory)"
     )
 
     args = parser.parse_args()
