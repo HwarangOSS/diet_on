@@ -1,82 +1,82 @@
 version: v1
 
 labels:
-  - label: 'setting'
+  - label: "setting"
     matcher:
       title: '\bsetting\b'
       branch: '^setting\/'
 
-  - label: 'feat'
+  - label: "feat"
     matcher:
       title: '\bfeat\b|\bfeature\b'
       branch: '^feat\/|^feature\/'
 
-  - label: 'fix'
+  - label: "fix"
     matcher:
       title: '\bfix\b'
       branch: '^fix\/'
 
-  - label: 'api'
+  - label: "api"
     matcher:
       title: '\bapi\b'
       branch: '^api\/'
 
-  - label: 'refactor'
+  - label: "refactor"
     matcher:
       title: '\brefactor\b'
       branch: '^refactor\/'
 
-  - label: 'chore'
+  - label: "chore"
     matcher:
       title: '\bchore\b'
       branch: '^chore\/'
 
-  - label: 'deploy'
+  - label: "deploy"
     matcher:
       title: '\bdeploy\b'
       branch: '^deploy\/'
 
-  - label: 'comment'
+  - label: "comment"
     matcher:
       title: '\bcomment\b'
       branch: '^comment\/'
 
-  - label: 'test'
+  - label: "test"
     matcher:
       title: '\btest\b'
       branch: '^test\/'
 
-  - label: 'docs'
+  - label: "docs"
     matcher:
       title: '\bdocs\b|\breadme\b'
       branch: '^docs\/'
 
-  - label: 'remove'
+  - label: "remove"
     matcher:
       title: '\bremove\b'
       branch: '^remove\/'
 
-  - label: 'rename'
+  - label: "rename"
     matcher:
       title: '\brename\b'
       branch: '^rename\/'
 
-  - label: 'BREAKING CHANGE'
+  - label: "BREAKING CHANGE"
     matcher:
       title: '\bBREAKING CHANGE\b|\bBREAKING_CHANGE\b'
       branch: '^breaking\/'
 
-  - label: 'HOTFIX'
+  - label: "HOTFIX"
     matcher:
       title: '\bHOTFIX\b|\bhotfix\b'
       branch: '^hotfix\/'
 
-  - label: 'style'
+  - label: "style"
     matcher:
       title: '\bstyle\b'
       branch: '^style\/'
 
-  - label: 'update'
+  - label: "update"
     matcher:
       title: '\bupdate\b'
       branch: '^update\/'
