@@ -1,6 +1,6 @@
 ---
 name: ✨ 기능 이슈
-about: 새로운 기능이나 개선 아이디어를 제안할 때 사용
+about: 새로운 기능이나 개선 아이디어를 제안할 때 사용, 타이틀은 그떄마다 바꿈
 title: '[Feature] '
 labels: feature
 assignees: ''
