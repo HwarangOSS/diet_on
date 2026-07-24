@@ -48,7 +48,10 @@ except Exception as e:
         PROGRESS_AVAILABLE = False
         ProgressBar = None
         DirectoryScanner = None
-        print(f"[Warning] Cannot import diskcleaner module, some features unavailable: {e}", file=sys.stderr)
+        print(
+            f"[Warning] Cannot import diskcleaner module, some features unavailable: {e}",
+            file=sys.stderr,
+        )
 
 
 class DiskAnalyzer:
@@ -220,7 +223,7 @@ class DiskAnalyzer:
                         max_files=max_files,
                         max_seconds=max_seconds,
                         cache_enabled=False,  # Disable cache for one-time scan
-                        include_windows=getattr(self, 'include_windows', False),
+                        include_windows=getattr(self, "include_windows", False),
                     )
 
                     print(f"\n[*] Scanning {scan_path}...")
@@ -534,7 +537,9 @@ class DiskAnalyzer:
                 "duplicates_found": 0,
             }
 
-    def generate_report(self, find_duplicates: bool = False, duplicate_strategy: str = "adaptive") -> Dict:
+    def generate_report(
+        self, find_duplicates: bool = False, duplicate_strategy: str = "adaptive"
+    ) -> Dict:
         """Generate comprehensive analysis report"""
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -610,9 +615,9 @@ def print_report(report: Dict):
                     print(f"    {i}. {group['count']} files x {group['size_mb']:.2f} MB")
                     print(f"       Reclaimable: {group['reclaimable_mb']:.2f} MB")
                     # Show first 2 file paths
-                    for j, path in enumerate(group['files'][:2], 1):
+                    for j, path in enumerate(group["files"][:2], 1):
                         print(f"       {j}. {path}")
-                    if len(group['files']) > 2:
+                    if len(group["files"]) > 2:
                         print(f"       ... and {len(group['files']) - 2} more")
         else:
             print(f"\n[OK] No duplicate files found")

@@ -54,7 +54,7 @@ def capture_snapshot(path: str, analyzer: GrowthAnalyzer) -> Dict:
 
     # Get disk usage
     try:
-        if hasattr(os, 'statvfs'):
+        if hasattr(os, "statvfs"):
             # Unix-like systems
             stat = os.statvfs(path)
             total_bytes = stat.f_frsize * stat.f_blocks
@@ -63,6 +63,7 @@ def capture_snapshot(path: str, analyzer: GrowthAnalyzer) -> Dict:
         else:
             # Windows
             import ctypes
+
             total_bytes = ctypes.c_ulonglong(0)
             free_bytes = ctypes.c_ulonglong(0)
             ctypes.windll.kernel32.GetDiskFreeSpaceExW(
@@ -137,7 +138,7 @@ def print_growth_report(report: Dict):
     print(f"[*] Date Range: {report['date_range']['earliest']} to {report['date_range']['latest']}")
 
     # Latest snapshot
-    latest = report['latest_snapshot']
+    latest = report["latest_snapshot"]
     print(f"\n[*] Current Usage:")
     print(f"  Total: {format_size(latest['total_bytes'])}")
     print(f"  Used:  {format_size(latest['used_bytes'])} ({latest['used_percent']:.1f}%)")
@@ -146,13 +147,13 @@ def print_growth_report(report: Dict):
     # Growth rates
     print(f"\n[*] Growth Rates:")
 
-    for period in ['daily', 'weekly', 'monthly']:
-        rate_data = report['growth_rates'][period]
+    for period in ["daily", "weekly", "monthly"]:
+        rate_data = report["growth_rates"][period]
 
-        if 'error' not in rate_data:
+        if "error" not in rate_data:
             period_name = period.capitalize()
-            growth_mb = rate_data['avg_growth_mb_per_period']
-            growth_gb = rate_data['avg_growth_gb_per_period']
+            growth_mb = rate_data["avg_growth_mb_per_period"]
+            growth_gb = rate_data["avg_growth_gb_per_period"]
 
             # Use appropriate unit
             if growth_gb >= 0.01:
@@ -163,26 +164,26 @@ def print_growth_report(report: Dict):
             print(f"  {period_name}: {growth_str} / {period}")
 
             # Show trend if available
-            if 'trend' in rate_data:
-                trend = rate_data['trend']
-                if trend == 'accelerating':
+            if "trend" in rate_data:
+                trend = rate_data["trend"]
+                if trend == "accelerating":
                     print(f"    Trend: Accelerating (+)")
-                elif trend == 'decelerating':
+                elif trend == "decelerating":
                     print(f"    Trend: Decelerating (-)")
                 else:
                     print(f"    Trend: Stable")
 
     # Prediction
-    prediction = report['prediction']
+    prediction = report["prediction"]
 
-    if 'error' not in prediction:
+    if "error" not in prediction:
         print(f"\n[*] Prediction:")
 
-        if 'message' in prediction:
+        if "message" in prediction:
             print(f"  {prediction['message']}")
         else:
-            daily_growth_mb = prediction['daily_growth_mb']
-            daily_growth_gb = prediction['daily_growth_gb']
+            daily_growth_mb = prediction["daily_growth_mb"]
+            daily_growth_gb = prediction["daily_growth_gb"]
 
             if daily_growth_gb >= 0.01:
                 growth_str = f"{daily_growth_gb:.2f} GB"
@@ -192,20 +193,24 @@ def print_growth_report(report: Dict):
             print(f"  Daily growth: {growth_str}")
             print(f"  Days until full: {prediction['days_until_full']:.0f}")
 
-            if prediction['days_until_full'] < 30:
-                print(f"  [!] WARNING: Disk will be full on {prediction['predicted_full_date_human']}")
+            if prediction["days_until_full"] < 30:
+                print(
+                    f"  [!] WARNING: Disk will be full on {prediction['predicted_full_date_human']}"
+                )
                 print(f"      ({prediction['weeks_until_full']:.1f} weeks)")
-            elif prediction['days_until_full'] < 90:
-                print(f"  [!] Caution: Disk will be full on {prediction['predicted_full_date_human']}")
+            elif prediction["days_until_full"] < 90:
+                print(
+                    f"  [!] Caution: Disk will be full on {prediction['predicted_full_date_human']}"
+                )
                 print(f"      ({prediction['months_until_full']:.1f} months)")
             else:
                 print(f"  Estimated full date: {prediction['predicted_full_date_human']}")
                 print(f"      ({prediction['months_until_full']:.1f} months)")
 
     # Warnings
-    if latest['used_percent'] > 90:
+    if latest["used_percent"] > 90:
         print(f"\n[!] CRITICAL: Disk is {latest['used_percent']:.1f}% full!")
-    elif latest['used_percent'] > 80:
+    elif latest["used_percent"] > 80:
         print(f"\n[!] WARNING: Disk is {latest['used_percent']:.1f}% full")
 
     print("\n" + "=" * 80)
@@ -223,13 +228,15 @@ def print_history(snapshots: list, limit: int = 20):
         print("\n[*] No historical data available")
         return
 
-    print(f"\n[*] Historical Data (showing last {min(limit, len(snapshots))} of {len(snapshots)} snapshots):")
+    print(
+        f"\n[*] Historical Data (showing last {min(limit, len(snapshots))} of {len(snapshots)} snapshots):"
+    )
     print("-" * 80)
 
     for snapshot in snapshots[-limit:]:
-        timestamp = snapshot['timestamp']
-        used_percent = snapshot['used_percent']
-        used_mb = snapshot['used_bytes'] / (1024**2)
+        timestamp = snapshot["timestamp"]
+        used_percent = snapshot["used_percent"]
+        used_mb = snapshot["used_bytes"] / (1024**2)
 
         print(f"  {timestamp}: {used_percent:.1f}% used ({used_mb:.0f} MB)")
 
@@ -241,6 +248,7 @@ def main():
     # Fix Windows console encoding
     if sys.platform == "win32":
         import codecs
+
         sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
         sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
 

@@ -166,7 +166,7 @@ def parallel_scan_directories(directories_list):
     """
     # Split directories among sub-agents (3-5 agents optimal)
     chunks = split_list(directories_list, n_chunks=3)
-    
+
     # Launch sub-agents in parallel
     agents = []
     for i, chunk in enumerate(chunks):
@@ -180,7 +180,7 @@ def parallel_scan_directories(directories_list):
             model="claude-sonnet-4-20250514"  # Fast model
         )
         agents.append(agent)
-    
+
     # Wait for all agents and collect results
     results = [agent.wait() for agent in agents]
     return merge_results(results)
@@ -208,14 +208,14 @@ def parallel_scan_subprocess(directories_list):
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         return json.loads(result.stdout)
-    
+
     # Use 3-5 parallel workers
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
             executor.submit(scan_directory, d): d
             for d in directories_list
         }
-        
+
         results = {}
         for future in as_completed(futures):
             directory = futures[future]
@@ -223,7 +223,7 @@ def parallel_scan_subprocess(directories_list):
                 results[directory] = future.result()
             except Exception as e:
                 results[directory] = {"error": str(e)}
-    
+
     return results
 
 # Usage: Scan C:\, D:\, E:\ in parallel
@@ -263,7 +263,7 @@ def create_agent_team_scan(top_level_paths):
         "coordination": "parallel",  # All run at once
         "aggregation": "merge_results"  # Combine results at end
     }
-    
+
     return launch_agent_team(team_config)
 ```
 

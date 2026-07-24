@@ -455,10 +455,16 @@ Examples:
     )
 
     parser.add_argument("--output", "-o", type=Path, help="Output .skill file path")
-    parser.add_argument("--project-root", type=Path, help="Project root directory (default: auto-detect)")
-    parser.add_argument("--skill-root", type=Path, help="Skill root directory (default: auto-detect)")
+    parser.add_argument(
+        "--project-root", type=Path, help="Project root directory (default: auto-detect)"
+    )
+    parser.add_argument(
+        "--skill-root", type=Path, help="Skill root directory (default: auto-detect)"
+    )
     parser.add_argument("--no-verify", action="store_true", help="Skip verification step")
-    parser.add_argument("--verify-only", type=Path, metavar="SKILL_FILE", help="Only verify existing skill package")
+    parser.add_argument(
+        "--verify-only", type=Path, metavar="SKILL_FILE", help="Only verify existing skill package"
+    )
 
     args = parser.parse_args()
 

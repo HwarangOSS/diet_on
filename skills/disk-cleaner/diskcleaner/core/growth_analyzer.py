@@ -297,7 +297,9 @@ class GrowthAnalyzer:
             "trend": (
                 "accelerating"
                 if acceleration > 0
-                else "decelerating" if acceleration < 0 else "stable"
+                else "decelerating"
+                if acceleration < 0
+                else "stable"
             ),
         }
 
