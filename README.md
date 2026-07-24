@@ -1,6 +1,6 @@
 # Disk Cleaner v2.1 - Intelligent Cross-Platform Disk Management
 
-**[English](README.md)** | **[ 中文文档](README_zh.md)**
+**[English](README.md)** | **[中文文档](README_zh.md)**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
@@ -8,6 +8,11 @@
 [![Skill](https://img.shields.io/badge/skill-add--skill-blue)](https://github.com/gccszs/disk-cleaner)
 
 A comprehensive cross-platform disk space monitoring, analysis, and intelligent cleaning toolkit. Features advanced 3D file classification, duplicate detection, automated scheduling, and platform-specific optimization.
+
+> **📌 이 저장소는 [gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)를 포크한 프로젝트입니다.**
+> 원본 저작자 및 라이선스(MIT)는 [LICENSE](LICENSE)를 따릅니다.
+> 아래 문서의 `skills/disk-cleaner/scripts/*.py` CLI 명령어들은 **원본 프로젝트 기준 사용법**이며,
+> 이 포크에서는 해당 스크립트를 제거하고 동일한 엔진(`diskcleaner/` 패키지)을 사용하는 PySide6 기반 GUI 앱으로 대체합니다.
 
 ## ⚡ Quick Install
 
