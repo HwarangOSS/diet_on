@@ -8,11 +8,12 @@ repos:
     rev: v4.4.0
     hooks:
       - id: trailing-whitespace
+        exclude: '^\.github/'
       - id: end-of-file-fixer
       - id: check-yaml
         args: [--unsafe]
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: check-merge-conflict
       - id: check-toml
       - id: debug-statements
@@ -22,7 +23,7 @@ repos:
     rev: 23.3.0
     hooks:
       - id: black
-        exclude: '^examples/'
+        exclude: "^examples/"
 
   # Import sorting
   - repo: https://github.com/PyCQA/isort
@@ -30,7 +31,7 @@ repos:
     hooks:
       - id: isort
         args: ["--profile", "black"]
-        exclude: '^examples/'
+        exclude: "^examples/"
 
   # Linting
   - repo: https://github.com/PyCQA/flake8
@@ -38,7 +39,7 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies: ["Flake8-pyproject"]
-        args: ['--max-line-length=100', '--extend-ignore=E203,E231,W503']
+        args: ["--max-line-length=100", "--extend-ignore=E203,E231,W503"]
         exclude: ^skills/disk-cleaner/
 
   # Type checking - temporarily disabled due to extensive type annotation work needed
@@ -55,5 +56,5 @@ ci:
     [pre-commit.ci] auto fixes from pre-commit hooks
 
     for more information, see https://pre-commit.ci
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
