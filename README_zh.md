@@ -9,6 +9,11 @@
 
 一个全面的跨平台磁盘空间监控、分析和智能清理工具包。具备先进的3D文件分类、重复文件检测、自动化调度和平台特定优化功能。
 
+> **📌 本仓库 Fork 自 [gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)。**
+> 原作者及许可证（MIT）请见 [LICENSE](LICENSE)。
+> 以下文档中的 `skills/disk-cleaner/scripts/*.py` CLI 命令为**原项目的使用方式**，
+> 本 Fork 中已移除该脚本目录，改为使用相同引擎（`diskcleaner/` 包）构建的 PySide6 GUI 应用。
+
 ## ⚡ 快速安装
 
 ### 方式1：作为 Agent SKILL 技能安装（推荐）
