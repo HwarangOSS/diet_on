@@ -29,6 +29,7 @@ BY_AGE_KO = {
     "很旧 (90天以上)": "매우 오래됨 (90일 이상)",
 }
 
+
 # 원본 dict의 key를 한국어로 바꿔서 새 dict 반환
 # 매핑표 없는 키는 그대로 반환 / 경고 -> 확인 후 그때마다 매핑 추가
 def to_ko(category_dict: dict, mapping: dict) -> dict:
