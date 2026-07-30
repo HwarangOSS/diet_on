@@ -11,11 +11,12 @@ See docs/LLM_SCHEMA.md for the schema and validation design this implements.
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional
-
-import anthropic
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from diskcleaner.core.scanner import FileInfo
+
+if TYPE_CHECKING:
+    import anthropic
 
 MODEL = "claude-haiku-4-5"
 BATCH_SIZE = 50
@@ -135,21 +136,22 @@ def _build_batches(files: List[FileInfo]) -> List[List[FileInfo]]:
 
 
 def _build_request(batch_id: str, batch: List[FileInfo]) -> Dict[str, Any]:
-    return {
-        "batch_id": batch_id,
-        "files": [
-            {
-                "file_id": f"{batch_id}:f_{i}",
-                "name": file.name,
-                "size": file.size,
-                "mtime": file.mtime,
-            }
-            for i, file in enumerate(batch)
-        ],
-    }
+    files = []
+    for i, file in enumerate(batch):
+        entry: Dict[str, Any] = {
+            "file_id": f"{batch_id}:f_{i}",
+            "name": file.name,
+            "size": file.size,
+        }
+        if file.mtime is not None:
+            entry["mtime"] = file.mtime
+        files.append(entry)
+    return {"batch_id": batch_id, "files": files}
 
 
-def _call_llm(client: anthropic.Anthropic, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _call_llm(client: "anthropic.Anthropic", request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    import anthropic
+
     try:
         response = client.messages.create(
             model=MODEL,
@@ -193,10 +195,15 @@ def get_recommendations(files: List[FileInfo]) -> Dict[str, Dict[str, Any]]:
         Dict mapping each file's path to a result dict with
         recommend_delete/reason/confidence/valid.
     """
-    client = anthropic.Anthropic()
     all_results: Dict[str, Dict[str, Any]] = {}
+    batches = _build_batches(files)
+    if not batches:
+        return all_results
 
-    for batch in _build_batches(files):
+    import anthropic
+
+    client = anthropic.Anthropic()
+    for batch in batches:
         batch_id = str(uuid.uuid4())
         path_by_id = {f"{batch_id}:f_{i}": file.path for i, file in enumerate(batch)}
         request = _build_request(batch_id, batch)

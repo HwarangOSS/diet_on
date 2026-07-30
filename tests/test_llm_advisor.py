@@ -69,6 +69,7 @@ def test_missing_file_id_falls_back_to_needs_review():
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is True
     assert result["b1:f_1"]["valid"] is False
+    assert result["b1:f_1"]["recommend_delete"] is False
     assert "응답 누락" in result["b1:f_1"]["reason"]
 
 
@@ -81,6 +82,7 @@ def test_duplicate_file_id_flagged():
         ],
     }
     result = validate_batch_response(_request(), response)
+    assert result["b1:f_0"]["recommend_delete"] is False
     assert "중복 응답" in result["b1:f_0"]["reason"]
 
 
@@ -93,6 +95,7 @@ def test_bad_recommend_delete_type_rejected():
     }
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is False
+    assert result["b1:f_0"]["recommend_delete"] is False
     assert "recommend_delete 형식" in result["b1:f_0"]["reason"]
 
 
@@ -108,6 +111,24 @@ def test_bool_confidence_rejected():
     assert "confidence 값" in result["b1:f_0"]["reason"]
 
 
+def test_out_of_range_confidence_rejected():
+    for bad_confidence in (-0.1, 1.1):
+        response = {
+            "batch_id": "b1",
+            "results": [
+                {
+                    "file_id": "b1:f_0",
+                    "recommend_delete": True,
+                    "reason": "x",
+                    "confidence": bad_confidence,
+                },
+            ],
+        }
+        result = validate_batch_response(_request(), response)
+        assert result["b1:f_0"]["valid"] is False
+        assert "confidence 값" in result["b1:f_0"]["reason"]
+
+
 def test_unknown_file_id_in_response_is_ignored():
     response = {
         "batch_id": "b1",
@@ -118,3 +139,4 @@ def test_unknown_file_id_in_response_is_ignored():
     }
     result = validate_batch_response(_request(), response)
     assert set(result.keys()) == {"b1:f_0", "b1:f_1"}
+    assert result["b1:f_1"]["recommend_delete"] is False

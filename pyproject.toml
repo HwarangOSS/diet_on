@@ -30,10 +30,12 @@ classifiers = [
 dependencies = [
     "PySide6>=6.6",
     "send2trash>=1.8",
-    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]
+llm = [
+    "anthropic>=0.77",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=3.0",
