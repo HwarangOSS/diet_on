@@ -82,6 +82,7 @@ def test_duplicate_file_id_flagged():
         ],
     }
     result = validate_batch_response(_request(), response)
+    assert result["b1:f_0"]["valid"] is False
     assert result["b1:f_0"]["recommend_delete"] is False
     assert "중복 응답" in result["b1:f_0"]["reason"]
 
@@ -108,6 +109,7 @@ def test_bool_confidence_rejected():
     }
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is False
+    assert result["b1:f_0"]["recommend_delete"] is False
     assert "confidence 값" in result["b1:f_0"]["reason"]
 
 
@@ -126,6 +128,7 @@ def test_out_of_range_confidence_rejected():
         }
         result = validate_batch_response(_request(), response)
         assert result["b1:f_0"]["valid"] is False
+        assert result["b1:f_0"]["recommend_delete"] is False
         assert "confidence 값" in result["b1:f_0"]["reason"]
 
 

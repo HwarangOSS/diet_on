@@ -202,14 +202,14 @@ def get_recommendations(files: List[FileInfo]) -> Dict[str, Dict[str, Any]]:
 
     import anthropic
 
-    client = anthropic.Anthropic()
-    for batch in batches:
-        batch_id = str(uuid.uuid4())
-        path_by_id = {f"{batch_id}:f_{i}": file.path for i, file in enumerate(batch)}
-        request = _build_request(batch_id, batch)
-        response = _call_llm(client, request)
-        validated = validate_batch_response(request, response)
-        for file_id, result in validated.items():
-            all_results[path_by_id[file_id]] = result
+    with anthropic.Anthropic() as client:
+        for batch in batches:
+            batch_id = str(uuid.uuid4())
+            path_by_id = {f"{batch_id}:f_{i}": file.path for i, file in enumerate(batch)}
+            request = _build_request(batch_id, batch)
+            response = _call_llm(client, request)
+            validated = validate_batch_response(request, response)
+            for file_id, result in validated.items():
+                all_results[path_by_id[file_id]] = result
 
     return all_results
