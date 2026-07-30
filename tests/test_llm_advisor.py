@@ -27,8 +27,18 @@ def test_valid_response_passes_through():
     response = {
         "batch_id": "b1",
         "results": [
-            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "temp file", "confidence": 0.9},
-            {"file_id": "b1:f_1", "recommend_delete": False, "reason": "unknown", "confidence": 0.3},
+            {
+                "file_id": "b1:f_0",
+                "recommend_delete": True,
+                "reason": "temp file",
+                "confidence": 0.9,
+            },
+            {
+                "file_id": "b1:f_1",
+                "recommend_delete": False,
+                "reason": "unknown",
+                "confidence": 0.3,
+            },
         ],
     }
     result = validate_batch_response(_request(), response)
@@ -50,9 +60,12 @@ def test_batch_id_mismatch_invalidates_whole_batch():
 
 
 def test_missing_file_id_falls_back_to_needs_review():
-    response = {"batch_id": "b1", "results": [
-        {"file_id": "b1:f_0", "recommend_delete": True, "reason": "temp file"},
-    ]}
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "temp file"},
+        ],
+    }
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is True
     assert result["b1:f_1"]["valid"] is False
@@ -60,36 +73,48 @@ def test_missing_file_id_falls_back_to_needs_review():
 
 
 def test_duplicate_file_id_flagged():
-    response = {"batch_id": "b1", "results": [
-        {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x"},
-        {"file_id": "b1:f_0", "recommend_delete": False, "reason": "y"},
-    ]}
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x"},
+            {"file_id": "b1:f_0", "recommend_delete": False, "reason": "y"},
+        ],
+    }
     result = validate_batch_response(_request(), response)
     assert "중복 응답" in result["b1:f_0"]["reason"]
 
 
 def test_bad_recommend_delete_type_rejected():
-    response = {"batch_id": "b1", "results": [
-        {"file_id": "b1:f_0", "recommend_delete": "yes", "reason": "x"},
-    ]}
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": "yes", "reason": "x"},
+        ],
+    }
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is False
     assert "recommend_delete 형식" in result["b1:f_0"]["reason"]
 
 
 def test_bool_confidence_rejected():
-    response = {"batch_id": "b1", "results": [
-        {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x", "confidence": True},
-    ]}
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x", "confidence": True},
+        ],
+    }
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is False
     assert "confidence 값" in result["b1:f_0"]["reason"]
 
 
 def test_unknown_file_id_in_response_is_ignored():
-    response = {"batch_id": "b1", "results": [
-        {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x"},
-        {"file_id": "b1:f_99", "recommend_delete": True, "reason": "ghost"},
-    ]}
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x"},
+            {"file_id": "b1:f_99", "recommend_delete": True, "reason": "ghost"},
+        ],
+    }
     result = validate_batch_response(_request(), response)
     assert set(result.keys()) == {"b1:f_0", "b1:f_1"}
