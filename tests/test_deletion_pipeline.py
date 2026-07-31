@@ -7,9 +7,9 @@ get_recommendations() so no network call is made.
 
 from pathlib import Path
 
-from diskcleaner.optimization.delete import DeletionManager
 from diskcleaner.core.deletion_pipeline import build_deletion_plan, delete_plan
 from diskcleaner.core.scanner import DirectoryScanner
+from diskcleaner.optimization.delete import DeletionManager
 
 
 def _scan(tmp_path: Path):
@@ -56,7 +56,12 @@ def test_confirm_needed_recommend_delete_false_stays_in_review_queue(tmp_path):
 
     def fake_recommendations(files):
         return {
-            f.path: {"recommend_delete": False, "reason": "unsure", "confidence": 0.4, "valid": True}
+            f.path: {
+                "recommend_delete": False,
+                "reason": "unsure",
+                "confidence": 0.4,
+                "valid": True,
+            }
             for f in files
         }
 
@@ -73,6 +78,22 @@ def test_confirm_needed_invalid_llm_result_stays_in_review_queue(tmp_path):
 
     assert plan.auto_delete == []
     assert [f.name for f in plan.review_queue] == ["photo.jpg"]
+
+
+def test_llm_call_failure_falls_back_to_review_queue_without_crashing(tmp_path):
+    (tmp_path / "a.cache").write_text("x" * 10)  # safe, unaffected by the LLM call
+    (tmp_path / "photo.jpg").write_text("y" * 10)  # confirm_needed
+
+    def broken_recommendations(files):
+        raise RuntimeError("ANTHROPIC_API_KEY not set")
+
+    plan = build_deletion_plan(_scan(tmp_path), get_recommendations=broken_recommendations)
+
+    assert [f.name for f in plan.auto_delete] == ["a.cache"]
+    assert [f.name for f in plan.review_queue] == ["photo.jpg"]
+
+    photo_path = next(f.path for f in plan.review_queue)
+    assert plan.llm_results[photo_path]["valid"] is False
 
 
 def test_delete_plan_only_deletes_confirmed_paths(tmp_path):

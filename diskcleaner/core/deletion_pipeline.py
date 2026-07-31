@@ -73,7 +73,15 @@ def build_deletion_plan(
         else:
             safe_files.append(file)
 
-    llm_results = get_recommendations(confirm_files)
+    try:
+        llm_results = get_recommendations(confirm_files)
+    except Exception as exc:
+        # LLM call itself failed (missing API key, anthropic not installed,
+        # network error, ...) - fail closed like validate_batch_response does
+        # rather than losing the already-computed safe/excluded buckets.
+        llm_results = {
+            f.path: llm_advisor.fallback(f"LLM 호출 실패 - 확인 필요 ({exc})") for f in confirm_files
+        }
 
     auto_delete = list(safe_files)
     review_queue = []
@@ -96,24 +104,25 @@ def delete_plan(
     plan: DeletionPlan,
     deletion_manager: DeletionManager,
     confirmed_paths: Set[str],
-    async_mode: bool = False,
 ) -> DeleteResult:
     """
     Hand the user-confirmed subset of a DeletionPlan to DeletionManager.delete().
+
+    async_mode is deliberately not exposed here: DeletionManager's async path
+    (AsyncDeleter) doesn't actually report which files succeeded or failed, so
+    wiring it through would silently return a DeleteResult that always claims
+    zero deletions while files disappear in the background.
 
     Args:
         plan: Plan produced by build_deletion_plan().
         deletion_manager: DeletionManager to execute the actual deletion.
         confirmed_paths: Paths the user explicitly confirmed for deletion,
             restricted to plan.auto_delete + plan.review_queue.
-        async_mode: Forwarded to DeletionManager.delete().
 
     Returns:
         DeleteResult from DeletionManager.delete().
     """
     candidates = [
-        Path(f.path)
-        for f in plan.auto_delete + plan.review_queue
-        if f.path in confirmed_paths
+        Path(f.path) for f in plan.auto_delete + plan.review_queue if f.path in confirmed_paths
     ]
-    return deletion_manager.delete(candidates, async_mode=async_mode)
+    return deletion_manager.delete(candidates)
