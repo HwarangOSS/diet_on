@@ -4,6 +4,7 @@ Core functionality modules
 
 from diskcleaner.core.cache import CacheManager
 from diskcleaner.core.classifier import FileClassifier
+from diskcleaner.core.deletion_pipeline import DeletionPlan, build_deletion_plan, delete_plan
 from diskcleaner.core.duplicate_finder import DuplicateFinder, DuplicateGroup
 from diskcleaner.core.interactive import InteractiveCleanupUI
 from diskcleaner.core.process_manager import ProcessInfo, ProcessManager
@@ -27,4 +28,7 @@ __all__ = [
     "ProgressBar",
     "IndeterminateProgress",
     "progress_iterator",
+    "DeletionPlan",
+    "build_deletion_plan",
+    "delete_plan",
 ]
