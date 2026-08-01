@@ -91,7 +91,11 @@ def build_deletion_plan(
     review_queue = []
     for file in confirm_files:
         result = llm_results.get(file.path)
-        if result and result.get("valid") and result.get("recommend_delete"):
+        if (
+            isinstance(result, dict)
+            and result.get("valid") is True
+            and result.get("recommend_delete") is True
+        ):
             auto_delete.append(file)
         else:
             review_queue.append(file)
