@@ -13,7 +13,7 @@ from diskcleaner.core.scanner import FileInfo
 
 
 def _file(name):
-    return FileInfo(path=f"/tmp/{name}", name=name, size=10, mtime=0.0, is_dir=False, is_link=False)
+    return FileInfo(path=f"mock/{name}", name=name, size=10, mtime=0.0, is_dir=False, is_link=False)
 
 
 def test_default_log_rule_is_safe():

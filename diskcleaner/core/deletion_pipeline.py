@@ -10,6 +10,7 @@ No file is ever deleted here without the caller passing an explicit confirmed
 path set to delete_plan() — user confirmation always happens upstream.
 """
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set
@@ -19,6 +20,8 @@ from diskcleaner.core.classifier import FileClassifier, RiskLevel
 from diskcleaner.core.safety import FileStatus, SafetyChecker
 from diskcleaner.core.scanner import FileInfo
 from diskcleaner.optimization.delete import DeleteResult, DeletionManager
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -79,6 +82,7 @@ def build_deletion_plan(
         # LLM call itself failed (missing API key, anthropic not installed,
         # network error, ...) - fail closed like validate_batch_response does
         # rather than losing the already-computed safe/excluded buckets.
+        logger.exception("LLM recommendation call failed; failing closed to review queue")
         llm_results = {
             f.path: llm_advisor.fallback(f"LLM 호출 실패 - 확인 필요 ({exc})") for f in confirm_files
         }
@@ -87,7 +91,7 @@ def build_deletion_plan(
     review_queue = []
     for file in confirm_files:
         result = llm_results.get(file.path)
-        if result and result["valid"] and result["recommend_delete"]:
+        if result and result.get("valid") and result.get("recommend_delete"):
             auto_delete.append(file)
         else:
             review_queue.append(file)

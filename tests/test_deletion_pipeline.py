@@ -49,6 +49,20 @@ def test_protected_extension_is_excluded(tmp_path):
     assert plan.review_queue == []
 
 
+def test_classifier_protected_risk_excludes_even_when_safety_says_safe(tmp_path):
+    (tmp_path / "app.exe").write_text("x" * 10)
+
+    plan = build_deletion_plan(
+        _scan(tmp_path),
+        safety=_FixedStatusSafety(FileStatus.SAFE),
+        get_recommendations=lambda files: {},
+    )
+
+    assert [f.name for f in plan.excluded] == ["app.exe"]
+    assert plan.auto_delete == []
+    assert plan.review_queue == []
+
+
 def test_locked_file_is_excluded(tmp_path):
     (tmp_path / "a.cache").write_text("x" * 10)
 
