@@ -135,6 +135,26 @@ def test_confirm_needed_invalid_llm_result_stays_in_review_queue(tmp_path):
     assert [f.name for f in plan.review_queue] == ["photo.jpg"]
 
 
+def test_confirm_needed_non_bool_recommendation_stays_in_review_queue(tmp_path):
+    (tmp_path / "photo.jpg").write_text("x" * 10)
+
+    def fake_recommendations(files):
+        return {
+            f.path: {
+                "recommend_delete": "true",
+                "reason": "old",
+                "confidence": 0.9,
+                "valid": "true",
+            }
+            for f in files
+        }
+
+    plan = build_deletion_plan(_scan(tmp_path), get_recommendations=fake_recommendations)
+
+    assert plan.auto_delete == []
+    assert [f.name for f in plan.review_queue] == ["photo.jpg"]
+
+
 def test_llm_call_failure_falls_back_to_review_queue_without_crashing(tmp_path):
     (tmp_path / "a.cache").write_text("x" * 10)  # safe, unaffected by the LLM call
     (tmp_path / "photo.jpg").write_text("y" * 10)  # confirm_needed
