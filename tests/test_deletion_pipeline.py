@@ -8,12 +8,25 @@ get_recommendations() so no network call is made.
 from pathlib import Path
 
 from diskcleaner.core.deletion_pipeline import build_deletion_plan, delete_plan
+from diskcleaner.core.safety import FileStatus
 from diskcleaner.core.scanner import DirectoryScanner
 from diskcleaner.optimization.delete import DeletionManager
 
 
 def _scan(tmp_path: Path):
     return [f for f in DirectoryScanner(str(tmp_path), cache_enabled=False).scan() if not f.is_dir]
+
+
+class _FixedStatusSafety:
+    """Fake SafetyChecker reporting a fixed FileStatus for every file, so
+    locked/no_permission exclusion can be tested without simulating real
+    OS-level locks or permission changes."""
+
+    def __init__(self, status: FileStatus):
+        self.status = status
+
+    def verify_all(self, files):
+        return [(f, self.status) for f in files]
 
 
 def test_safe_type_goes_to_auto_delete(tmp_path):
@@ -34,6 +47,34 @@ def test_protected_extension_is_excluded(tmp_path):
     assert [f.name for f in plan.excluded] == ["app.exe"]
     assert plan.auto_delete == []
     assert plan.review_queue == []
+
+
+def test_locked_file_is_excluded(tmp_path):
+    (tmp_path / "a.cache").write_text("x" * 10)
+
+    plan = build_deletion_plan(
+        _scan(tmp_path),
+        safety=_FixedStatusSafety(FileStatus.LOCKED),
+        get_recommendations=lambda files: {},
+    )
+
+    assert plan.auto_delete == []
+    assert plan.review_queue == []
+    assert [f.name for f in plan.excluded] == ["a.cache"]
+
+
+def test_no_permission_file_is_excluded(tmp_path):
+    (tmp_path / "a.cache").write_text("x" * 10)
+
+    plan = build_deletion_plan(
+        _scan(tmp_path),
+        safety=_FixedStatusSafety(FileStatus.NO_PERMISSION),
+        get_recommendations=lambda files: {},
+    )
+
+    assert plan.auto_delete == []
+    assert plan.review_queue == []
+    assert [f.name for f in plan.excluded] == ["a.cache"]
 
 
 def test_confirm_needed_recommend_delete_true_moves_to_auto_delete(tmp_path):
