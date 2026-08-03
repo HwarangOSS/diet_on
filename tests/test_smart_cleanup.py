@@ -166,7 +166,7 @@ def test_smart_cleanup_get_files_by_risk():
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
 
-        # Create temp files (will be confirm_needed risk)
+        # Create temp files (declared "risk": "safe" in config/defaults.py's rules)
         (temp_path / "test1.tmp").write_text("x" * 100)
         (temp_path / "test2.tmp").write_text("y" * 100)
 
@@ -174,11 +174,11 @@ def test_smart_cleanup_get_files_by_risk():
         engine = SmartCleanupEngine(str(temp_path), cache_enabled=False)
         report = engine.analyze(include_duplicates=False, safety_check=False)
 
-        # Get confirm_needed files (tmp files are categorized as confirm_needed)
-        confirm_files = engine.get_files_by_risk(report, "confirm_needed")
+        # Get safe files (tmp files are categorized as safe)
+        safe_files = engine.get_files_by_risk(report, "safe")
 
-        # Should find temp files as confirm_needed
-        assert len(confirm_files) >= 2
+        # Should find temp files as safe
+        assert len(safe_files) >= 2
         print("Get files by risk: PASS")
 
 

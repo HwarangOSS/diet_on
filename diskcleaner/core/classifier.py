@@ -219,6 +219,12 @@ class FileClassifier:
             if fnmatch.fnmatch(file.name, pattern):
                 return RiskLevel.PROTECTED
 
+        # Custom rules declare their own risk level; honor it before falling
+        # back to category-name matching below.
+        custom_risk = self._custom_rule_risk(file)
+        if custom_risk is not None:
+            return custom_risk
+
         # Classify by file type
         file_type = self._classify_type(file)
 
@@ -234,6 +240,26 @@ class FileClassifier:
 
         # Default to confirm needed
         return RiskLevel.CONFIRM_NEEDED
+
+    def _custom_rule_risk(self, file: FileInfo) -> Optional[RiskLevel]:
+        """
+        Look up the risk level the first matching custom rule declares.
+
+        Args:
+            file: FileInfo object.
+
+        Returns:
+            RiskLevel from the matching rule's "risk" field, or None if no
+            custom rule matches or the matching rule has no valid risk value.
+        """
+        for rule in self.custom_rules:
+            pattern = rule.get("pattern", "")
+            if self._matches_pattern(file, pattern):
+                try:
+                    return RiskLevel(rule.get("risk", ""))
+                except ValueError:
+                    return None
+        return None
 
     def _classify_age(self, file: FileInfo) -> str:
         """
