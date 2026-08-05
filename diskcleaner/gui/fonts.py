@@ -7,15 +7,15 @@ FONT_DIR = os.path.join(os.path.dirname(__file__), "assets", "fonts")
 _FONT_FILES = {
     "Play-Regular": "Play-Regular.ttf",
     "Play-Bold": "Play-Bold.ttf",
-    "Pretendard-Thin": "Pretendard-Thin.woff",
-    "Pretendard-ExtraLight": "Pretendard-ExtraLight.woff",
-    "Pretendard-Light": "Pretendard-Light.woff",
-    "Pretendard-Regular": "Pretendard-Regular.woff",
-    "Pretendard-Medium": "Pretendard-Medium.woff",
-    "Pretendard-SemiBold": "Pretendard-SemiBold.woff",
-    "Pretendard-Bold": "Pretendard-Bold.woff",
-    "Pretendard-ExtraBold": "Pretendard-ExtraBold.woff",
-    "Pretendard-Black": "Pretendard-Black.woff",
+    "Pretendard-Thin": "Pretendard-Thin.ttf",
+    "Pretendard-ExtraLight": "Pretendard-ExtraLight.ttf",
+    "Pretendard-Light": "Pretendard-Light.ttf",
+    "Pretendard-Regular": "Pretendard-Regular.ttf",
+    "Pretendard-Medium": "Pretendard-Medium.ttf",
+    "Pretendard-SemiBold": "Pretendard-SemiBold.ttf",
+    "Pretendard-Bold": "Pretendard-Bold.ttf",
+    "Pretendard-ExtraBold": "Pretendard-ExtraBold.ttf",
+    "Pretendard-Black": "Pretendard-Black.ttf",
 }
 
 
