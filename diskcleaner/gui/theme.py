@@ -95,7 +95,7 @@ QLabel#clickLabel {{
 }}
 
 QLabel#subLabel {{
-    color: {DARK_TEXT_GRAY};
+    color: {DARK_TEXT};
     font-size: 11px;
 }}
 

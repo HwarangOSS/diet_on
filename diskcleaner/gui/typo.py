@@ -54,3 +54,8 @@ def hashtag() -> QFont:
 # 중복항목 묶기 타이틀
 def duplicate() -> QFont:
     return get_font(FontFamily.PRETENDARD_BOLD, 14)
+
+# 중복항목 묶기 타이틀
+def caption() -> QFont:
+    return get_font(FontFamily.PRETENDARD_REGULAR, 8)
+

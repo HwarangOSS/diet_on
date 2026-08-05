@@ -22,6 +22,15 @@ titlebar.minimize_requested.connect(window.showMinimized)
 titlebar.close_requested.connect(window.close)
 root_layout.addWidget(titlebar)
 
+def toggle_theme():
+    global is_dark
+    is_dark = not is_dark
+    apply_theme(window, dark=is_dark)
+    titlebar.apply_icon_colors(dark=is_dark)
+    save_dark_mode(is_dark) 
+
+titlebar.menu_requested.connect(toggle_theme)
+
 home = HomePage()
 home.scan_requested.connect(lambda: print("[DEBUG] 스캔 요청됨!"))
 root_layout.addWidget(home)

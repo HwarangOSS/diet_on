@@ -6,6 +6,7 @@ from PySide6.QtGui import QIcon
 from diskcleaner.gui.typo import titlebar_title
 
 from . import icons
+from .more_menu import MoreMenu
 
 PADDING = 12
 ICON_BUTTON_SIZE = 18
@@ -34,7 +35,7 @@ class TitleBar(QWidget):
         outer.setSpacing(0)
 
         bar = QWidget()
-        bar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed) 
+        bar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         bar_layout = QHBoxLayout(bar)
         bar_layout.setContentsMargins(PADDING, PADDING, PADDING, PADDING)
         bar_layout.setSpacing(PADDING)
@@ -42,7 +43,7 @@ class TitleBar(QWidget):
         self.title_label = QLabel(self._full_title)
         self.title_label.setObjectName("titleLabel")
         self.title_label.setFont(titlebar_title())
-        bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)  
+        bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)
         bar_layout.addStretch()
 
         ICON_GAP = 3
@@ -65,6 +66,15 @@ class TitleBar(QWidget):
         self.separator.setFixedHeight(1)
         outer.addWidget(self.separator)
 
+        # --- 더보기 팝업 메뉴 ---
+        self.more_menu = MoreMenu(self)
+        self.menu_button.clicked.disconnect()
+        self.menu_button.clicked.connect(self._toggle_more_menu)
+
+        self.more_menu.theme_toggle_requested.connect(self.menu_requested.emit)
+        self.more_menu.help_requested.connect(lambda: print("[DEBUG] 도움말 클릭"))
+        self.more_menu.license_requested.connect(lambda: print("[DEBUG] 라이센스 클릭"))
+
         self.apply_icon_colors(dark=False)
 
     def _make_icon_button(self, icon_factory, signal: Signal) -> QPushButton:
@@ -77,6 +87,13 @@ class TitleBar(QWidget):
         button.clicked.connect(signal.emit)
         button.setProperty("icon_factory", icon_factory)
         return button
+
+    def _toggle_more_menu(self):
+        if self.more_menu.isVisible():
+            self.more_menu.close()
+        else:
+            self.more_menu.apply_theme(dark=self._is_dark)
+            self.more_menu.show_below(self.menu_button)
 
     def apply_icon_colors(self, dark: bool):
         self._is_dark = dark
