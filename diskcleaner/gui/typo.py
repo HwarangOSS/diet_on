@@ -28,6 +28,9 @@ def get_font(family_key: str, size: int, bold: bool = False) -> QFont:
 def play_large() -> QFont:
     return get_font(FontFamily.PLAY_REGULAR, 40)
 
+def titlebar_title() -> QFont:
+    return get_font(FontFamily.PLAY_BOLD, 18) 
+
 # Delete & Duplicate 소제목
 def play_medium() -> QFont:
     return get_font(FontFamily.PLAY_REGULAR, 32)
