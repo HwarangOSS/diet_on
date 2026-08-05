@@ -1,1 +1,123 @@
-# 로딩화면
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsOpacityEffect
+from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal
+
+from diskcleaner.gui.typo import play_medium, body, titlebar_title, hashtag
+from diskcleaner.gui.components.loading import icons
+from diskcleaner.gui.components.loading.progress_bar import LoadingProgressBar
+
+LOADING_MESSAGES = [
+    "AI가 파일을 탐색 중이에요",
+    "삭제할 파일을 찾는 중이에요",
+    "중복 파일을 분석 중이에요",
+    "불필요한 파일을 정리하고 있어요",
+    "거의 다 됐어요, 조금만 기다려주세요",
+]
+
+ICON_SWAP_INTERVAL_MS = 600
+MESSAGE_INTERVAL_MS = 2200
+FADE_DURATION_MS = 350
+
+
+class LoadingPage(QWidget):
+    analyze_finished = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("loadingPage")
+
+        self._is_dark = False
+        self._icon_toggle = False
+        self._message_index = 0
+
+        layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(0)
+
+        self.icon_label = QLabel()
+        self.icon_label.setFixedSize(icons.ICON_SIZE, icons.ICON_SIZE)
+        self.icon_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.icon_label, alignment=Qt.AlignCenter)
+
+        layout.addSpacing(20)
+
+        self.title_label = QLabel("Finding...")
+        self.title_label.setObjectName("loadingTitle")
+        self.title_label.setFont(titlebar_title())
+        self.title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.title_label)
+
+        layout.addSpacing(8)
+
+        self.message_label = QLabel(LOADING_MESSAGES[0])
+        self.message_label.setObjectName("loadingMessage")
+        self.message_label.setFont(hashtag())
+        self.message_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.message_label)
+
+        self._message_opacity = QGraphicsOpacityEffect(self.message_label)
+        self.message_label.setGraphicsEffect(self._message_opacity)
+        self._message_opacity.setOpacity(1.0)
+
+        layout.addSpacing(16)
+
+        self.progress_bar = LoadingProgressBar()
+        layout.addWidget(self.progress_bar, alignment=Qt.AlignCenter)
+
+        self._icon_timer = QTimer(self)
+        self._icon_timer.timeout.connect(self._toggle_icon)
+
+        self._message_timer = QTimer(self)
+        self._message_timer.timeout.connect(self._next_message)
+
+        self._apply_icon()
+
+    def start(self):
+        self._icon_timer.start(ICON_SWAP_INTERVAL_MS)
+        self._message_timer.start(MESSAGE_INTERVAL_MS)
+
+    def stop(self):
+        self._icon_timer.stop()
+        self._message_timer.stop()
+
+    def update_progress(self, value: float):
+        self.progress_bar.set_progress(value)
+
+    def _toggle_icon(self):
+        self._icon_toggle = not self._icon_toggle
+        self._apply_icon()
+
+    def _apply_icon(self):
+        pixmap = icons.make_file2_icon() if self._icon_toggle else icons.make_file1_icon()
+        self.icon_label.setPixmap(pixmap)
+
+    def _next_message(self):
+        self._message_index = (self._message_index + 1) % len(LOADING_MESSAGES)
+        next_text = LOADING_MESSAGES[self._message_index]
+
+        fade_out = QPropertyAnimation(self._message_opacity, b"opacity")
+        fade_out.setDuration(FADE_DURATION_MS)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.setEasingCurve(QEasingCurve.InCubic)
+
+        def on_fade_out_finished():
+            self.message_label.setText(next_text)
+            fade_in = QPropertyAnimation(self._message_opacity, b"opacity")
+            fade_in.setDuration(FADE_DURATION_MS)
+            fade_in.setStartValue(0.0)
+            fade_in.setEndValue(1.0)
+            fade_in.setEasingCurve(QEasingCurve.OutCubic)
+            fade_in.start()
+            self._current_anim = fade_in
+
+        fade_out.finished.connect(on_fade_out_finished)
+        fade_out.start()
+        self._current_anim = fade_out
+
+    def apply_theme(self, dark: bool):
+        self._is_dark = dark
+        self.progress_bar.set_dark(dark)
+
+    def refresh_fonts(self):
+        self.title_label.setFont(play_medium())
+        self.message_label.setFont(body())

@@ -14,28 +14,25 @@ class HomePage(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(0)
 
-
         self.power_button = PowerButton()
         layout.addWidget(self.power_button, alignment=Qt.AlignCenter)
 
-        layout.addSpacing(20) 
+        layout.addSpacing(20)
 
-        # Click
-        click_label = QLabel("Click")
-        click_label.setFont(play_large())
-        click_label.setObjectName("clickLabel")
-        click_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(click_label)
+        self.click_label = QLabel("Click")
+        self.click_label.setFont(play_large())
+        self.click_label.setObjectName("clickLabel")
+        self.click_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.click_label)
 
         layout.addSpacing(8)
 
-        # 설명
-        sub_label = QLabel("불필요한 파일을\n한번에 간편하게 정리해요")
-        sub_label.setTextFormat(Qt.PlainText) 
-        sub_label.setFont(body())
-        sub_label.setObjectName("subLabel")
-        sub_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(sub_label)
+        self.sub_label = QLabel("불필요한 파일을\n한번에 간편하게 정리해요")
+        self.sub_label.setTextFormat(Qt.PlainText)
+        self.sub_label.setFont(body())
+        self.sub_label.setObjectName("subLabel")
+        self.sub_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.sub_label)
 
         self.power_button.clicked_scan.connect(self.scan_requested.emit)
 
@@ -43,3 +40,7 @@ class HomePage(QWidget):
         super().resizeEvent(event)
         canvas_size = min(self.width(), self.height())
         self.power_button.update_responsive_size(canvas_size)
+
+    def refresh_fonts(self):
+        self.click_label.setFont(play_large())
+        self.sub_label.setFont(body())

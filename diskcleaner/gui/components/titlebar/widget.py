@@ -66,7 +66,6 @@ class TitleBar(QWidget):
         self.separator.setFixedHeight(1)
         outer.addWidget(self.separator)
 
-        # --- 더보기 팝업 메뉴 ---
         self.more_menu = MoreMenu(self)
         self.menu_button.clicked.disconnect()
         self.menu_button.clicked.connect(self._toggle_more_menu)
@@ -112,6 +111,9 @@ class TitleBar(QWidget):
             self.title_label.setText(elided)
         else:
             self.title_label.setText(self._full_title)
+
+    def refresh_fonts(self):
+        self.title_label.setFont(titlebar_title())
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

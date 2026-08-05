@@ -1,9 +1,22 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout
-from PySide6.QtCore import Qt, QPoint
+# main_window.py 수정
 
-BORDER_WIDTH = 6 
+from PySide6.QtWidgets import QWidget, QApplication
+from PySide6.QtCore import Qt, QPoint, Signal, QEvent
+from diskcleaner.gui.typo import set_global_scale
+
+BORDER_WIDTH = 6
+
+CURSOR_MAP = {
+    "left": Qt.SizeHorCursor, "right": Qt.SizeHorCursor,
+    "top": Qt.SizeVerCursor, "bottom": Qt.SizeVerCursor,
+    "top_left": Qt.SizeFDiagCursor, "bottom_right": Qt.SizeFDiagCursor,
+    "top_right": Qt.SizeBDiagCursor, "bottom_left": Qt.SizeBDiagCursor,
+}
+
 
 class MainWindow(QWidget):
+    font_scale_changed = Signal()
+
     def __init__(self):
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -16,6 +29,34 @@ class MainWindow(QWidget):
         self._resize_edge = None
         self._start_pos = None
         self._start_geo = None
+        self._cursor_overridden = False  # --- 추가 ---
+
+    def _enable_edge_resize_for(self, widget: QWidget):
+        widget.setMouseTracking(True)
+        widget.installEventFilter(self)
+        for child in widget.findChildren(QWidget):
+            child.setMouseTracking(True)
+            child.installEventFilter(self)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._enable_edge_resize_for(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() in (QEvent.MouseMove, QEvent.MouseButtonPress, QEvent.MouseButtonRelease):
+            if hasattr(event, "globalPosition"):
+                global_pos = event.globalPosition().toPoint()
+                local_pos = self.mapFromGlobal(global_pos)
+
+                if event.type() == QEvent.MouseMove:
+                    self._handle_move(local_pos, event)
+                elif event.type() == QEvent.MouseButtonPress:
+                    if self._handle_press(local_pos, event):
+                        return True
+                elif event.type() == QEvent.MouseButtonRelease:
+                    self._handle_release()
+
+        return super().eventFilter(obj, event)
 
     def _edge_at(self, pos: QPoint) -> str | None:
         rect = self.rect()
@@ -34,19 +75,17 @@ class MainWindow(QWidget):
         if bottom: return "bottom"
         return None
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            edge = self._edge_at(event.position().toPoint())
-            if edge:
-                self._resizing = True
-                self._resize_edge = edge
-                self._start_pos = event.globalPosition().toPoint()
-                self._start_geo = self.geometry()
-        super().mousePressEvent(event)
+    def _handle_press(self, local_pos: QPoint, event) -> bool:
+        edge = self._edge_at(local_pos)
+        if edge:
+            self._resizing = True
+            self._resize_edge = edge
+            self._start_pos = event.globalPosition().toPoint()
+            self._start_geo = self.geometry()
+            return True
+        return False
 
-    def mouseMoveEvent(self, event):
-        pos = event.position().toPoint()
-
+    def _handle_move(self, local_pos: QPoint, event):
         if self._resizing:
             delta = event.globalPosition().toPoint() - self._start_pos
             geo = self._start_geo
@@ -67,18 +106,34 @@ class MainWindow(QWidget):
             h = max(h, self.minimumHeight())
             self.setGeometry(x, y, w, h)
         else:
-            edge = self._edge_at(pos)
-            cursor_map = {
-                "left": Qt.SizeHorCursor, "right": Qt.SizeHorCursor,
-                "top": Qt.SizeVerCursor, "bottom": Qt.SizeVerCursor,
-                "top_left": Qt.SizeFDiagCursor, "bottom_right": Qt.SizeFDiagCursor,
-                "top_right": Qt.SizeBDiagCursor, "bottom_left": Qt.SizeBDiagCursor,
-            }
-            self.setCursor(cursor_map.get(edge, Qt.ArrowCursor))
+            edge = self._edge_at(local_pos)
+            self._apply_edge_cursor(edge)
 
-        super().mouseMoveEvent(event)
+    def _apply_edge_cursor(self, edge: str | None):
+        """--- 핵심 수정: QApplication override cursor 사용 ---"""
+        if edge:
+            cursor = CURSOR_MAP.get(edge, Qt.ArrowCursor)
+            if self._cursor_overridden:
+                QApplication.changeOverrideCursor(cursor)
+            else:
+                QApplication.setOverrideCursor(cursor)
+                self._cursor_overridden = True
+        else:
+            if self._cursor_overridden:
+                QApplication.restoreOverrideCursor()
+                self._cursor_overridden = False
 
-    def mouseReleaseEvent(self, event):
+    def _handle_release(self):
+        was_resizing = self._resizing
         self._resizing = False
         self._resize_edge = None
-        super().mouseReleaseEvent(event)
+
+        if was_resizing:
+            set_global_scale(self.width())
+            self.font_scale_changed.emit()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if not self._resizing:
+            set_global_scale(self.width())
+            self.font_scale_changed.emit()

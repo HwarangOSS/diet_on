@@ -26,28 +26,22 @@ QWidget {{
 
 QLabel#titleLabel {{
     color: {LIGHT_TITLE};
-    font-weight: 600;
 }}
 
 QLabel#clickLabel {{
     color: {LIGHT_TEXT};
-    font-size: 16px;
-    font-weight: 600;
 }}
 
 QLabel#subLabel {{
     color: {LIGHT_TEXT_GRAY};
-    font-size: 11px;
 }}
 
 QLabel#hintLabel {{
     color: {LIGHT_TEXT_GRAY_LIGHT};
-    font-size: 10px;
 }}
 
 QFrame#dangerCard {{
     border: 1px solid {ACCENT_DANGER};
-    border-radius: 8px;
 }}
 QLabel#dangerIcon, QLabel#dangerText {{
     color: {ACCENT_DANGER};
@@ -55,7 +49,6 @@ QLabel#dangerIcon, QLabel#dangerText {{
 
 QFrame#successCard {{
     border: 1px solid {ACCENT_SUCCESS};
-    border-radius: 8px;
 }}
 QLabel#successIcon, QLabel#successText {{
     color: {ACCENT_SUCCESS};
@@ -74,34 +67,34 @@ QPushButton#titleIconButton:hover {{
     background-color: rgba(0, 0, 0, 0.06);
     border-radius: 4px;
 }}
+QLabel#loadingTitle {{
+    color: {LIGHT_TEXT};
+}}
+QLabel#loadingMessage {{
+    color: {LIGHT_TEXT_GRAY};
+}}
 """
 
 DARK_QSS = f"""
 QWidget {{
     background-color: {DARK_BG};
     color: {DARK_TEXT};
-    font-family: "Segoe UI", "Malgun Gothic", sans-serif;
 }}
 
 QLabel#titleLabel {{
     color: {DARK_TITLE};
-    font-weight: 600;
 }}
 
 QLabel#clickLabel {{
     color: {DARK_TEXT};
-    font-size: 16px;
-    font-weight: 600;
 }}
 
 QLabel#subLabel {{
     color: {DARK_TEXT};
-    font-size: 11px;
 }}
 
 QLabel#hintLabel {{
     color: {DARK_TEXT_GRAY_LIGHT};
-    font-size: 10px;
 }}
 
 QFrame#dangerCard {{
@@ -132,6 +125,12 @@ QPushButton#titleIconButton {{
 QPushButton#titleIconButton:hover {{
     background-color: rgba(255, 255, 255, 0.08);
     border-radius: 4px;
+}}
+QLabel#loadingTitle {{
+    color: {DARK_TEXT};
+}}
+QLabel#loadingMessage {{
+    color: {DARK_TEXT};
 }}
 """
 

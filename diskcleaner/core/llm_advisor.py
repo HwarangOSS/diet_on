@@ -213,3 +213,15 @@ def get_recommendations(files: List[FileInfo]) -> Dict[str, Dict[str, Any]]:
                 all_results[path_by_id[file_id]] = result
 
     return all_results
+
+# 임시 테스트 코드
+def test_connection() -> str:
+    import anthropic
+
+    with anthropic.Anthropic() as client:
+        response = client.messages.create(
+            model=MODEL,
+            max_tokens=50,
+            messages=[{"role": "user", "content": "연결 테스트야. '연결됨'이라고만 답해줘."}],
+        )
+        return next((b.text for b in response.content if b.type == "text"), "(응답 없음)")
