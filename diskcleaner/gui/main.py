@@ -1,9 +1,7 @@
-﻿from dotenv import load_dotenv
-load_dotenv()
+﻿import sys
 
-import sys
-
-from PySide6.QtCore import Qt, QTimer
+from dotenv import load_dotenv
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
 
 from diskcleaner.core.llm_advisor import test_connection
@@ -14,6 +12,8 @@ from diskcleaner.gui.pages.loading import LoadingPage
 from diskcleaner.gui.settings import load_dark_mode, save_dark_mode
 from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.typo import set_global_scale
+
+load_dotenv()
 
 app = QApplication(sys.argv)
 
@@ -51,7 +51,7 @@ def go_to_loading():
     except Exception as e:
         print(f"[ERROR] API 연결 실패: {e}")
 
-# 임시: 프로그레스바 테스트
+    # 임시: 프로그레스바 테스트
     fake_progress = {"value": 0}
 
     def fake_tick():

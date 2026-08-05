@@ -16,6 +16,8 @@ CURSOR_MAP = {
     "top_right": Qt.SizeBDiagCursor,
     "bottom_left": Qt.SizeBDiagCursor,
 }
+
+
 class MainWindow(QWidget):
     font_scale_changed = Signal()
 

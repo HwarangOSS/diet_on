@@ -1,5 +1,5 @@
 from PySide6.QtCore import QPoint, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QCursor, QPainter, QPainterPath
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.typo import body_medium, caption
