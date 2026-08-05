@@ -1,14 +1,14 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
-from PySide6.QtCore import Qt, Signal, QPoint, QRectF
-from PySide6.QtGui import QPainter, QPainterPath, QColor, QCursor
+from PySide6.QtCore import QPoint, QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QCursor, QPainter, QPainterPath
+from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
-from diskcleaner.gui.typo import body_medium,caption
+from diskcleaner.gui.typo import body_medium, caption
 
 MENU_WIDTH = 92
 MENU_HEIGHT = 150
 CORNER_RADIUS = 8
-TRIANGLE_SIZE = 8       
-TRIANGLE_OFFSET = 18   
+TRIANGLE_SIZE = 8
+TRIANGLE_OFFSET = 18
 
 
 class MoreMenu(QWidget):
@@ -18,11 +18,10 @@ class MoreMenu(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent, Qt.Popup | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)  
+        self.setAttribute(Qt.WA_TranslucentBackground)
         self.setFixedSize(MENU_WIDTH, MENU_HEIGHT + TRIANGLE_SIZE)
 
         self._is_dark = False
-
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, TRIANGLE_SIZE, 0, 0)
@@ -83,16 +82,16 @@ class MoreMenu(QWidget):
     def apply_theme(self, dark: bool):
         self._is_dark = dark
 
-    
         self.theme_label.setText("라이트 모드" if dark else "다크 모드")
 
         text_color = "#FFFFFF" if dark else "#555555"
         line_color = "#B9B9B9"
-        bg_color = "#1A2332" if dark else "#FFFFFF"  
+        bg_color = "#1A2332" if dark else "#FFFFFF"
 
         self._bg_color = bg_color
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QLabel#moreMenuItem {{
                 color: {text_color};
                 background: transparent;
@@ -106,7 +105,8 @@ class MoreMenu(QWidget):
             QLabel#moreMenuVersion {{
                 color: #B9B9B9;
             }}
-        """)
+        """
+        )
         self.update()
 
     def paintEvent(self, event):
@@ -135,7 +135,6 @@ class MoreMenu(QWidget):
         painter.drawPath(path)
 
         painter.end()
-
 
     def show_below(self, anchor_widget: QWidget):
         anchor_global = anchor_widget.mapToGlobal(QPoint(0, anchor_widget.height()))

@@ -1,7 +1,9 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt, Signal
-from diskcleaner.gui.typo import play_large, body
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+
 from diskcleaner.gui.components.power_button import PowerButton
+from diskcleaner.gui.typo import body, play_large
+
 
 class HomePage(QWidget):
     scan_requested = Signal()

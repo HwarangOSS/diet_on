@@ -214,6 +214,7 @@ def get_recommendations(files: List[FileInfo]) -> Dict[str, Dict[str, Any]]:
 
     return all_results
 
+
 # 임시 테스트 코드
 def test_connection() -> str:
     import anthropic

@@ -1,16 +1,21 @@
 # main_window.py 수정
 
-from PySide6.QtWidgets import QWidget, QApplication
-from PySide6.QtCore import Qt, QPoint, Signal, QEvent
+from PySide6.QtCore import QEvent, QPoint, Qt, Signal
+from PySide6.QtWidgets import QApplication, QWidget
+
 from diskcleaner.gui.typo import set_global_scale
 
 BORDER_WIDTH = 6
 
 CURSOR_MAP = {
-    "left": Qt.SizeHorCursor, "right": Qt.SizeHorCursor,
-    "top": Qt.SizeVerCursor, "bottom": Qt.SizeVerCursor,
-    "top_left": Qt.SizeFDiagCursor, "bottom_right": Qt.SizeFDiagCursor,
-    "top_right": Qt.SizeBDiagCursor, "bottom_left": Qt.SizeBDiagCursor,
+    "left": Qt.SizeHorCursor,
+    "right": Qt.SizeHorCursor,
+    "top": Qt.SizeVerCursor,
+    "bottom": Qt.SizeVerCursor,
+    "top_left": Qt.SizeFDiagCursor,
+    "bottom_right": Qt.SizeFDiagCursor,
+    "top_right": Qt.SizeBDiagCursor,
+    "bottom_left": Qt.SizeBDiagCursor,
 }
 
 
@@ -65,14 +70,22 @@ class MainWindow(QWidget):
         top = pos.y() <= BORDER_WIDTH
         bottom = pos.y() >= rect.height() - BORDER_WIDTH
 
-        if top and left: return "top_left"
-        if top and right: return "top_right"
-        if bottom and left: return "bottom_left"
-        if bottom and right: return "bottom_right"
-        if left: return "left"
-        if right: return "right"
-        if top: return "top"
-        if bottom: return "bottom"
+        if top and left:
+            return "top_left"
+        if top and right:
+            return "top_right"
+        if bottom and left:
+            return "bottom_left"
+        if bottom and right:
+            return "bottom_right"
+        if left:
+            return "left"
+        if right:
+            return "right"
+        if top:
+            return "top"
+        if bottom:
+            return "bottom"
         return None
 
     def _handle_press(self, local_pos: QPoint, event) -> bool:

@@ -1,5 +1,5 @@
 from PySide6.QtCore import QByteArray, QRectF, Qt
-from PySide6.QtGui import QPixmap, QPainter
+from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
 ICON_SIZE = 18
@@ -23,7 +23,9 @@ SVG_CLOSE = """
 """
 
 
-def _render_pixmap(svg_str: str, color: str, size: int = ICON_SIZE, rotation: float = 0.0, scale: int = 3) -> QPixmap:
+def _render_pixmap(
+    svg_str: str, color: str, size: int = ICON_SIZE, rotation: float = 0.0, scale: int = 3
+) -> QPixmap:
     svg = svg_str.format(color=color)
     renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
 
@@ -42,7 +44,7 @@ def _render_pixmap(svg_str: str, color: str, size: int = ICON_SIZE, rotation: fl
     renderer.render(painter, QRectF(0, 0, render_size, render_size))
     painter.end()
 
-    pixmap.setDevicePixelRatio(scale) 
+    pixmap.setDevicePixelRatio(scale)
     return pixmap
 
 

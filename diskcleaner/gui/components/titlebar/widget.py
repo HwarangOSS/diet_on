@@ -1,8 +1,15 @@
-from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QLabel, QPushButton, QFrame, QVBoxLayout, QSizePolicy
-)
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
+
 from diskcleaner.gui.typo import titlebar_title
 
 from . import icons
@@ -106,7 +113,9 @@ class TitleBar(QWidget):
 
         if container_width < TITLE_COLLAPSE_WIDTH:
             metrics = self.title_label.fontMetrics()
-            available = max(container_width - (PADDING * 2) - (ICON_BUTTON_SIZE * 3) - (PADDING * 2), 20)
+            available = max(
+                container_width - (PADDING * 2) - (ICON_BUTTON_SIZE * 3) - (PADDING * 2), 20
+            )
             elided = metrics.elidedText(self._full_title, Qt.ElideRight, available)
             self.title_label.setText(elided)
         else:
@@ -117,7 +126,9 @@ class TitleBar(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self._drag_pos = event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
+            self._drag_pos = (
+                event.globalPosition().toPoint() - self.window().frameGeometry().topLeft()
+            )
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):

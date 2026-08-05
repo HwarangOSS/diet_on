@@ -1,9 +1,10 @@
 import os
+
 from PySide6.QtCore import QByteArray, QRectF, Qt
-from PySide6.QtGui import QPixmap, QPainter
+from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
-ICON_SIZE = 140  
+ICON_SIZE = 140
 
 SVG_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "svgs")
 
@@ -23,7 +24,7 @@ def _render_pixmap_from_file(filename: str, max_size: int = ICON_SIZE, scale: in
     svg_bytes = _load_svg_bytes(filename)
     renderer = QSvgRenderer(svg_bytes)
 
-    default_size = renderer.defaultSize()  
+    default_size = renderer.defaultSize()
     if default_size.isEmpty():
         w, h = max_size, max_size
     else:
@@ -42,7 +43,7 @@ def _render_pixmap_from_file(filename: str, max_size: int = ICON_SIZE, scale: in
 
     painter = QPainter(pixmap)
     painter.setRenderHint(QPainter.Antialiasing)
-    renderer.render(painter, QRectF(0, 0, render_w, render_h))  
+    renderer.render(painter, QRectF(0, 0, render_w, render_h))
     painter.end()
 
     pixmap.setDevicePixelRatio(scale)

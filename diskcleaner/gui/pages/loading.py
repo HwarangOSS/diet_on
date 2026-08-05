@@ -1,9 +1,9 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsOpacityEffect
-from PySide6.QtCore import Qt, QTimer, QPropertyAnimation, QEasingCurve, Signal
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
 
-from diskcleaner.gui.typo import play_medium, body, titlebar_title, hashtag
 from diskcleaner.gui.components.loading import icons
 from diskcleaner.gui.components.loading.progress_bar import LoadingProgressBar
+from diskcleaner.gui.typo import body, hashtag, play_medium, titlebar_title
 
 LOADING_MESSAGES = [
     "AI가 파일을 탐색 중이에요",

@@ -1,5 +1,5 @@
-﻿from PySide6.QtCore import Qt, QPointF, QRectF, Property, QPropertyAnimation, QEasingCurve, Signal
-from PySide6.QtGui import QPainter, QColor, QBrush, QRadialGradient
+﻿from PySide6.QtCore import Property, QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QPainter, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
 from . import styles
@@ -7,7 +7,6 @@ from .icons import load_icon_renderers
 
 
 class PowerButton(QWidget):
-
     toggled = Signal(bool)
     clicked_scan = Signal()
 

@@ -1,4 +1,5 @@
 import os
+
 from PySide6.QtGui import QFontDatabase
 
 FONT_DIR = os.path.join(os.path.dirname(__file__), "assets", "fonts")
@@ -20,6 +21,7 @@ _FONT_FILES = {
 
 
 _loaded_families: dict[str, str] = {}
+
 
 def load_app_fonts() -> dict[str, str]:
     if _loaded_families:

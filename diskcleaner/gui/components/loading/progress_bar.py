@@ -1,11 +1,11 @@
 # gui/components/loading/progress_bar.py
+from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, QRectF, Qt
+from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, QRectF, Property, QPropertyAnimation, QEasingCurve
-from PySide6.QtGui import QPainter, QColor, QPainterPath
 
 BAR_WIDTH = 513
 BAR_HEIGHT = 22
-RADIUS = BAR_HEIGHT / 2 
+RADIUS = BAR_HEIGHT / 2
 
 LIGHT_TRACK_COLOR = "#FFFFFF"
 DARK_TRACK_COLOR = "#101820"
@@ -13,7 +13,6 @@ FILL_COLOR = "#3A4A63"
 
 
 class LoadingProgressBar(QWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(BAR_WIDTH, BAR_HEIGHT)
@@ -69,12 +68,11 @@ class LoadingProgressBar(QWidget):
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(track_path)
 
-
         fill_ratio = self._progress / 100.0
         fill_width = self.width() * fill_ratio
 
         if fill_width > 0:
-            painter.setClipPath(track_path)  
+            painter.setClipPath(track_path)
 
             fill_path = QPainterPath()
             fill_rect = QRectF(0, 0, fill_width, self.height())

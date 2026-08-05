@@ -1,17 +1,20 @@
 ﻿from dotenv import load_dotenv
+
 load_dotenv()
 
 import sys
-from PySide6.QtWidgets import QApplication, QVBoxLayout, QStackedWidget
+
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
+
+from diskcleaner.core.llm_advisor import test_connection
+from diskcleaner.gui.components.titlebar import TitleBar
 from diskcleaner.gui.main_window import MainWindow
 from diskcleaner.gui.pages.home import HomePage
 from diskcleaner.gui.pages.loading import LoadingPage
-from diskcleaner.gui.components.titlebar import TitleBar
-from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.settings import load_dark_mode, save_dark_mode
+from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.typo import set_global_scale
-from diskcleaner.core.llm_advisor import test_connection
 
 app = QApplication(sys.argv)
 
@@ -63,6 +66,8 @@ def go_to_loading():
     fake_timer.timeout.connect(fake_tick)
     fake_timer.start(150)
     go_to_loading._fake_timer = fake_timer
+
+
 #####################
 
 home.scan_requested.connect(go_to_loading)
