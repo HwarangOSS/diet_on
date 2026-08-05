@@ -1,4 +1,4 @@
-#기본 디자인 시스템 & 컬러팔레트
+# 기본 디자인 시스템 & 컬러 팔레트
 # 화이트 모드
 LIGHT_BG = "#FFFFFF"
 LIGHT_TITLE = "#3A4A63"
@@ -45,12 +45,6 @@ QLabel#hintLabel {{
     font-size: 10px;
 }}
 
-QPushButton#closeButton, QPushButton#minButton, QPushButton#menuButton {{
-    color: {LIGHT_TEXT};
-    background: transparent;
-    border: none;
-}}
-
 QFrame#dangerCard {{
     border: 1px solid {ACCENT_DANGER};
     border-radius: 8px;
@@ -65,6 +59,20 @@ QFrame#successCard {{
 }}
 QLabel#successIcon, QLabel#successText {{
     color: {ACCENT_SUCCESS};
+}}
+
+QFrame#titleSeparator {{
+    background: #B9B9B9;
+}}
+
+QPushButton#titleIconButton {{
+    background: transparent;
+    border: none;
+    padding: 0;
+}}
+QPushButton#titleIconButton:hover {{
+    background-color: rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
 }}
 """
 
@@ -96,12 +104,6 @@ QLabel#hintLabel {{
     font-size: 10px;
 }}
 
-QPushButton#closeButton, QPushButton#minButton, QPushButton#menuButton {{
-    color: {DARK_TEXT};
-    background: transparent;
-    border: none;
-}}
-
 QFrame#dangerCard {{
     border: 1px solid {ACCENT_DANGER};
     border-radius: 8px;
@@ -116,6 +118,20 @@ QFrame#successCard {{
 }}
 QLabel#successIcon, QLabel#successText {{
     color: {ACCENT_SUCCESS};
+}}
+
+QFrame#titleSeparator {{
+    background: #4A5568;
+}}
+
+QPushButton#titleIconButton {{
+    background: transparent;
+    border: none;
+    padding: 0;
+}}
+QPushButton#titleIconButton:hover {{
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
 }}
 """
 
