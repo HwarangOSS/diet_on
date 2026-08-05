@@ -1,4 +1,5 @@
 # 기본 디자인 시스템 & 컬러 팔레트
+
 # 화이트 모드
 LIGHT_BG = "#FFFFFF"
 LIGHT_TITLE = "#3A4A63"

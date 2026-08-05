@@ -1,6 +1,5 @@
 # 디자인 토큰
 from PySide6.QtGui import QFont
-
 from .fonts import load_app_fonts
 
 # 전역 반응형

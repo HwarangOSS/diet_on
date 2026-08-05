@@ -1,5 +1,4 @@
 ﻿from dotenv import load_dotenv
-
 load_dotenv()
 
 import sys
@@ -52,7 +51,7 @@ def go_to_loading():
     except Exception as e:
         print(f"[ERROR] API 연결 실패: {e}")
 
-    # 임시: 프로그레스바 테스트
+# 임시: 프로그레스바 테스트
     fake_progress = {"value": 0}
 
     def fake_tick():

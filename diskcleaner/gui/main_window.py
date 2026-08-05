@@ -1,5 +1,4 @@
-# main_window.py 수정
-
+# 화면 레이아웃
 from PySide6.QtCore import QEvent, QPoint, Qt, Signal
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -17,8 +16,6 @@ CURSOR_MAP = {
     "top_right": Qt.SizeBDiagCursor,
     "bottom_left": Qt.SizeBDiagCursor,
 }
-
-
 class MainWindow(QWidget):
     font_scale_changed = Signal()
 
@@ -123,7 +120,6 @@ class MainWindow(QWidget):
             self._apply_edge_cursor(edge)
 
     def _apply_edge_cursor(self, edge: str | None):
-        """--- 핵심 수정: QApplication override cursor 사용 ---"""
         if edge:
             cursor = CURSOR_MAP.get(edge, Qt.ArrowCursor)
             if self._cursor_overridden:
