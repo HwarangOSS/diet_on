@@ -2,7 +2,7 @@
 from diskcleaner.core.smart_cleanup import SmartCleanupEngine
 from diskcleaner.gui.analysis_worker import AnalysisWorker
 
-from .factories import make_report
+from tests.gui.factories import make_report
 
 
 def test_worker_emits_finished_with_report(qtbot, monkeypatch, tmp_path):

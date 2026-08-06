@@ -1,4 +1,6 @@
 # 화면 레이아웃
+from __future__ import annotations
+
 from PySide6.QtCore import QEvent, QPoint, Qt, Signal
 from PySide6.QtWidgets import QApplication, QWidget
 
