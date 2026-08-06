@@ -1,7 +1,7 @@
 from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QWidget
-from gui.theme import palette_for
+from diskcleaner.gui.theme import palette_for
 
 BAR_WIDTH = 513
 BAR_HEIGHT = 22

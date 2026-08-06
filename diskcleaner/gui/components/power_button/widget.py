@@ -16,6 +16,7 @@ class PowerButton(QWidget):
         self.setCursor(Qt.PointingHandCursor)
 
         self._is_active = False
+        self._is_dark = False
         self._svg_inactive, self._svg_active = load_icon_renderers()
 
         # --- 애니메이션 ---
@@ -48,6 +49,10 @@ class PowerButton(QWidget):
     @property
     def is_active(self) -> bool:
         return self._is_active
+
+    def set_dark(self, dark: bool):
+        self._is_dark = dark
+        self.update()
 
     def set_active(self, value: bool, emit: bool = True):
         if self._is_active == value:
@@ -98,7 +103,7 @@ class PowerButton(QWidget):
     def _paint_background(self, painter: QPainter, center: QPointF, radius: float):
         # 배경 원
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QBrush(styles.BG_COLOR))
+        painter.setBrush(QBrush(styles.bg_color(self._is_dark)))
         painter.drawEllipse(center, radius, radius)
 
         gradient = QRadialGradient(center, radius)

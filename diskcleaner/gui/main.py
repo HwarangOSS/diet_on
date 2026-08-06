@@ -78,6 +78,7 @@ def toggle_theme():
     apply_theme(window, dark=is_dark)
     titlebar.apply_icon_colors(dark=is_dark)
     loading.apply_theme(dark=is_dark)
+    home.apply_theme(dark=is_dark)
     save_dark_mode(is_dark)
 
 
@@ -87,6 +88,7 @@ is_dark = load_dark_mode()
 apply_theme(window, dark=is_dark)
 titlebar.apply_icon_colors(dark=is_dark)
 loading.apply_theme(dark=is_dark)
+home.apply_theme(dark=is_dark)
 
 # 폰트 연결
 set_global_scale(window.width())

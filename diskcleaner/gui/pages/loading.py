@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidg
 
 from diskcleaner.gui.components.loading import icons
 from diskcleaner.gui.components.loading.progress_bar import LoadingProgressBar
-from diskcleaner.gui.typo import body, hashtag, play_medium, titlebar_title
+from diskcleaner.gui.typo import body_md, headline
 
 LOADING_MESSAGES = [
     "AI가 파일을 탐색 중이에요",
@@ -42,7 +42,7 @@ class LoadingPage(QWidget):
 
         self.title_label = QLabel("Finding...")
         self.title_label.setObjectName("loadingTitle")
-        self.title_label.setFont(titlebar_title())
+        self.title_label.setFont(headline())
         self.title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title_label)
 
@@ -50,7 +50,7 @@ class LoadingPage(QWidget):
 
         self.message_label = QLabel(LOADING_MESSAGES[0])
         self.message_label.setObjectName("loadingMessage")
-        self.message_label.setFont(hashtag())
+        self.message_label.setFont(body_md())
         self.message_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.message_label)
 
@@ -119,5 +119,5 @@ class LoadingPage(QWidget):
         self.progress_bar.set_dark(dark)
 
     def refresh_fonts(self):
-        self.title_label.setFont(play_medium())
-        self.message_label.setFont(body())
+        self.title_label.setFont(headline())
+        self.message_label.setFont(body_md())
