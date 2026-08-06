@@ -158,6 +158,10 @@ QLabel#resultHeading {{
     color: {"#FFFFFF" if dark else p.text_primary};
 }}
 
+QLabel#detailTitle {{
+    color: {"#FFFFFF" if dark else p.text_primary};
+}}
+
 QScrollBar:vertical {{
     background: transparent;
     width: 10px;
@@ -185,24 +189,3 @@ def apply_theme(widget, dark: bool):
 
 def palette_for(dark: bool) -> Palette:
     return DARK if dark else LIGHT
-
-
-# ---------------------------------------------------------------------------
-# 하위 호환용 별칭 — 기존에 LIGHT_BG, ACCENT_DANGER 식으로 직접 import하던
-# 코드가 있다면 그대로 동작하도록 남겨둠. 새 코드에서는 palette_for()나
-# LIGHT/DARK 객체를 직접 쓰는 걸 권장.
-# ---------------------------------------------------------------------------
-LIGHT_BG = LIGHT.bg
-LIGHT_TITLE = LIGHT.title
-LIGHT_TEXT = LIGHT.text_primary
-LIGHT_TEXT_GRAY = LIGHT.text_secondary
-LIGHT_TEXT_GRAY_LIGHT = LIGHT.text_tertiary
-
-DARK_BG = DARK.bg
-DARK_TITLE = DARK.title
-DARK_TEXT = DARK.text_primary
-DARK_TEXT_GRAY = DARK.text_secondary
-DARK_TEXT_GRAY_LIGHT = DARK.text_tertiary
-
-ACCENT_DANGER = LIGHT.danger   # 주의: 다크에서는 DARK.danger를 써야 대비가 맞음
-ACCENT_SUCCESS = LIGHT.success  # 주의: 다크에서는 DARK.success를 써야 대비가 맞음

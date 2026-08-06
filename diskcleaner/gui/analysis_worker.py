@@ -28,7 +28,7 @@ class AnalysisWorker(QObject):
         print(
             f"[SCAN] 완료 ({time.monotonic() - start:.1f}s) - "
             f"파일 {report.total_files}개, 중복 {len(report.duplicates)}그룹, "
-            f"회수가능 {report.total_reclaimable / (1024**3):.2f}GB"
+            f"확보 가능한 용량 {report.total_reclaimable / (1024**3):.2f}GB"
         )
         self.finished.emit(report)
 
@@ -41,8 +41,5 @@ def start_analysis(target_path: str) -> tuple[QThread, AnalysisWorker]:
     thread.started.connect(worker.run)
     worker.finished.connect(thread.quit)
     worker.error.connect(thread.quit)
-    worker.finished.connect(worker.deleteLater)
-    worker.error.connect(worker.deleteLater)
-    thread.finished.connect(thread.deleteLater)
 
     return thread, worker

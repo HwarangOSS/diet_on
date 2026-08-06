@@ -7,10 +7,16 @@ from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
 from diskcleaner.gui.analysis_worker import start_analysis
 from diskcleaner.gui.components.titlebar import TitleBar
 from diskcleaner.gui.main_window import MainWindow
+from diskcleaner.gui.pages.delete_detail import DeletePage
+from diskcleaner.gui.pages.duplicate_detail import DuplicatePage
 from diskcleaner.gui.pages.home import HomePage
 from diskcleaner.gui.pages.loading import LoadingPage
-from diskcleaner.gui.pages.result import ResultPage
-from diskcleaner.gui.result_mapping import report_to_results
+from diskcleaner.gui.pages.result import CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
+from diskcleaner.gui.result_mapping import (
+    report_to_delete_files,
+    report_to_duplicate_groups,
+    report_to_results,
+)
 from diskcleaner.gui.settings import load_dark_mode, save_dark_mode
 from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.typo import set_global_scale
@@ -43,20 +49,35 @@ def main():
     home = HomePage()
     loading = LoadingPage()
     result = ResultPage()
+    delete_detail = DeletePage()
+    duplicate_detail = DuplicatePage()
 
     stack.addWidget(home)
     stack.addWidget(loading)
     stack.addWidget(result)
+    stack.addWidget(delete_detail)
+    stack.addWidget(duplicate_detail)
 
     root_layout.addWidget(stack)
 
-    state = {"thread": None, "worker": None, "progress_timer": None, "progress_value": 0}
+    state = {
+        "thread": None,
+        "worker": None,
+        "progress_timer": None,
+        "progress_value": 0,
+        "report": None,
+    }
 
     def _stop_progress_timer():
         timer = state["progress_timer"]
         if timer is not None:
             timer.stop()
             state["progress_timer"] = None
+
+    def _wait_for_thread():
+        thread = state["thread"]
+        if thread is not None:
+            thread.wait()
 
     def _tick_progress():
         if state["progress_value"] < PROGRESS_TICK_CAP:
@@ -66,15 +87,18 @@ def main():
 
     def on_analysis_finished(report):
         _stop_progress_timer()
+        _wait_for_thread()
         loading.update_progress(100)
         loading.stop()
 
+        state["report"] = report
         result.set_results(report_to_results(report))
         stack.setCurrentWidget(result)
         print("[DEBUG] 분석 완료 → 결과 페이지로 전환")
 
     def on_analysis_error(message: str):
         _stop_progress_timer()
+        _wait_for_thread()
         loading.stop()
         print(f"[ERROR] 분석 실패: {message}")
         stack.setCurrentWidget(home)
@@ -99,10 +123,21 @@ def main():
         progress_timer.start(PROGRESS_TICK_MS)
         state["progress_timer"] = progress_timer
 
+    def go_to_detail(category: str):
+        report = state["report"]
+        if report is None:
+            return
+        if category == CATEGORY_DELETE_TARGET:
+            delete_detail.set_files(report_to_delete_files(report))
+            delete_detail.update_responsive_size(window.width())
+            stack.setCurrentWidget(delete_detail)
+        elif category == CATEGORY_DUPLICATE:
+            duplicate_detail.set_groups(report_to_duplicate_groups(report))
+            duplicate_detail.update_responsive_size(window.width())
+            stack.setCurrentWidget(duplicate_detail)
+
     home.scan_requested.connect(go_to_loading)
-    result.card_clicked.connect(
-        lambda key: print(f"[DEBUG] 결과 카드 클릭: {key} (상세 페이지는 아직 없음)")
-    )
+    result.card_clicked.connect(go_to_detail)
 
     is_dark = load_dark_mode()
 
@@ -114,6 +149,8 @@ def main():
         loading.apply_theme(dark=is_dark)
         home.apply_theme(dark=is_dark)
         result.apply_theme(dark=is_dark)
+        delete_detail.apply_theme(dark=is_dark)
+        duplicate_detail.apply_theme(dark=is_dark)
         save_dark_mode(is_dark)
 
     titlebar.menu_requested.connect(toggle_theme)
@@ -123,6 +160,8 @@ def main():
     loading.apply_theme(dark=is_dark)
     home.apply_theme(dark=is_dark)
     result.apply_theme(dark=is_dark)
+    delete_detail.apply_theme(dark=is_dark)
+    duplicate_detail.apply_theme(dark=is_dark)
 
     # 폰트 연결
     set_global_scale(window.width())
@@ -130,10 +169,14 @@ def main():
     window.font_scale_changed.connect(loading.refresh_fonts)
     window.font_scale_changed.connect(titlebar.refresh_fonts)
     window.font_scale_changed.connect(result.refresh_fonts)
+    window.font_scale_changed.connect(delete_detail.refresh_fonts)
+    window.font_scale_changed.connect(duplicate_detail.refresh_fonts)
     home.refresh_fonts()
     loading.refresh_fonts()
     titlebar.refresh_fonts()
     result.refresh_fonts()
+    delete_detail.refresh_fonts()
+    duplicate_detail.refresh_fonts()
     result.update_responsive_size(window.width())
 
     window.show()

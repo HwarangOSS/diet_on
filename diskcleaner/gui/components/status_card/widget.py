@@ -2,7 +2,7 @@ from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QWidget
 
-from diskcleaner.gui.theme import ACCENT_DANGER, ACCENT_SUCCESS, palette_for
+from diskcleaner.gui.theme import LIGHT, palette_for
 from diskcleaner.gui.typo import BASE_WINDOW_WIDTH, body_md, body_mini
 
 from . import icons, styles
@@ -117,7 +117,7 @@ class StatusCard(QWidget):
         self.icon_label.setPixmap(maker(color, size=size))
 
     def _glow_color(self) -> str:
-        return ACCENT_DANGER if self._status == styles.STATUS_DANGER else ACCENT_SUCCESS
+        return LIGHT.danger if self._status == styles.STATUS_DANGER else LIGHT.success
 
     def paintEvent(self, event):
         painter = QPainter(self)
