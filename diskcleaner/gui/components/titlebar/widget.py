@@ -10,8 +10,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from diskcleaner.gui.typo import titlebar_title
-
+from diskcleaner.gui.theme import palette_for
+from diskcleaner.gui.typo import headline
 from . import icons
 from .more_menu import MoreMenu
 
@@ -49,7 +49,7 @@ class TitleBar(QWidget):
 
         self.title_label = QLabel(self._full_title)
         self.title_label.setObjectName("titleLabel")
-        self.title_label.setFont(titlebar_title())
+        self.title_label.setFont(headline())
         bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)
         bar_layout.addStretch()
 
@@ -103,7 +103,7 @@ class TitleBar(QWidget):
 
     def apply_icon_colors(self, dark: bool):
         self._is_dark = dark
-        color = "#FFFFFF" if dark else "#101820"
+        color = palette_for(dark).text_primary
         self.menu_button.setIcon(QIcon(icons.make_more_icon(color)))
         self.min_button.setIcon(QIcon(icons.make_minimize_icon(color)))
         self.close_button.setIcon(QIcon(icons.make_close_icon(color)))
@@ -122,7 +122,7 @@ class TitleBar(QWidget):
             self.title_label.setText(self._full_title)
 
     def refresh_fonts(self):
-        self.title_label.setFont(titlebar_title())
+        self.title_label.setFont(headline())
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

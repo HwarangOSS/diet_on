@@ -35,7 +35,7 @@ def get_font(family_key: str, size: int, bold: bool = False) -> QFont:
 
 # Play ----------------------------------
 # 메인 타이틀 / 로딩 / 클릭
-def Headline() -> QFont:
+def headline() -> QFont:
     return get_font(FontFamily.PLAY_REGULAR, 20)
 
 # 삭제 & 중복 소제목 
@@ -61,11 +61,11 @@ def group() -> QFont:
     return get_font(FontFamily.PRETENDARD_BOLD, 8)
 
 # 기본 텍스트 & 파일 경로
-def path() -> QFont:
+def body_md() -> QFont:
     return get_font(FontFamily.PRETENDARD_REGULAR, 8)
 
 # 용량 표시 & 더보기
-def mini() -> QFont:
+def body_mini() -> QFont:
     return get_font(FontFamily.PRETENDARD_REGULAR, 6)
 
 # 버전

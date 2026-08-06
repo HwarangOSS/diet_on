@@ -2,13 +2,20 @@ from PySide6.QtCore import QPoint, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
-from diskcleaner.gui.typo import body_medium, caption
+from diskcleaner.gui.theme import palette_for
+from diskcleaner.gui.typo import body_md, ver
 
 MENU_WIDTH = 92
 MENU_HEIGHT = 150
 CORNER_RADIUS = 8
 TRIANGLE_SIZE = 8
 TRIANGLE_OFFSET = 18
+
+
+def _with_alpha(hex_color: str, alpha: int) -> QColor:
+    color = QColor(hex_color)
+    color.setAlpha(alpha)
+    return color
 
 
 class MoreMenu(QWidget):
@@ -22,6 +29,7 @@ class MoreMenu(QWidget):
         self.setFixedSize(MENU_WIDTH, MENU_HEIGHT + TRIANGLE_SIZE)
 
         self._is_dark = False
+        self._bg_color = "#FFFFFF"
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, TRIANGLE_SIZE, 0, 0)
@@ -45,7 +53,7 @@ class MoreMenu(QWidget):
 
         self.version_label = QLabel("버전 정보 : 1.0.0 ver")
         self.version_label.setObjectName("moreMenuVersion")
-        self.version_label.setFont(caption())
+        self.version_label.setFont(ver())
         self.version_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.version_label)
         layout.addSpacing(10)
@@ -55,7 +63,7 @@ class MoreMenu(QWidget):
     def _make_item(self, text: str) -> QLabel:
         label = QLabel(text)
         label.setObjectName("moreMenuItem")
-        label.setFont(body_medium())
+        label.setFont(body_md())
         label.setAlignment(Qt.AlignCenter)
         label.setFixedHeight(34)
         label.setCursor(Qt.PointingHandCursor)
@@ -81,13 +89,12 @@ class MoreMenu(QWidget):
 
     def apply_theme(self, dark: bool):
         self._is_dark = dark
+        p = palette_for(dark)
 
         self.theme_label.setText("라이트 모드" if dark else "다크 모드")
-
-        text_color = "#FFFFFF" if dark else "#555555"
-        line_color = "#B9B9B9"
-        bg_color = "#1A2332" if dark else "#FFFFFF"
-
+        text_color = p.text_primary
+        line_color = p.border
+        bg_color = p.surface
         self._bg_color = bg_color
 
         self.setStyleSheet(
@@ -97,13 +104,13 @@ class MoreMenu(QWidget):
                 background: transparent;
             }}
             QLabel#moreMenuItem:hover {{
-                background-color: rgba(0, 0, 0, {0.08 if not dark else 0.15});
+                background-color: {p.hover_overlay};
             }}
             QFrame#moreMenuSeparator {{
                 background: {line_color};
             }}
             QLabel#moreMenuVersion {{
-                color: #B9B9B9;
+                color: {p.text_tertiary};
             }}
         """
         )
@@ -112,6 +119,8 @@ class MoreMenu(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+
+        p = palette_for(self._is_dark)
 
         path = QPainterPath()
         body_rect = QRectF(0, TRIANGLE_SIZE, MENU_WIDTH, MENU_HEIGHT)
@@ -130,7 +139,7 @@ class MoreMenu(QWidget):
         painter.setBrush(QColor(self._bg_color))
         painter.drawPath(path)
 
-        painter.setPen(QColor(0, 0, 0, 20))
+        painter.setPen(_with_alpha(p.border, 160))
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
 

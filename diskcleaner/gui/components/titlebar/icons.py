@@ -2,6 +2,8 @@ from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
+from diskcleaner.gui.theme import LIGHT
+
 ICON_SIZE = 18
 
 SVG_MORE = """
@@ -48,13 +50,13 @@ def _render_pixmap(
     return pixmap
 
 
-def make_more_icon(color: str = "#101820") -> QPixmap:
+def make_more_icon(color: str = LIGHT.text_primary) -> QPixmap:
     return _render_pixmap(SVG_MORE, color)
 
 
-def make_minimize_icon(color: str = "#101820") -> QPixmap:
+def make_minimize_icon(color: str = LIGHT.text_primary) -> QPixmap:
     return _render_pixmap(SVG_MINIMIZE, color)
 
 
-def make_close_icon(color: str = "#101820") -> QPixmap:
+def make_close_icon(color: str = LIGHT.text_primary) -> QPixmap:
     return _render_pixmap(SVG_CLOSE, color)
