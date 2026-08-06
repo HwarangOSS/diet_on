@@ -81,6 +81,8 @@ class LoadingPage(QWidget):
 
     def update_progress(self, value: float):
         self.progress_bar.set_progress(value)
+        if value >= 100:
+            self.analyze_finished.emit()
 
     def _toggle_icon(self):
         self._icon_toggle = not self._icon_toggle

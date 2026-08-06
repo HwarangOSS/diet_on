@@ -50,9 +50,9 @@ def _render_pixmap_from_file(filename: str, max_size: int = ICON_SIZE, scale: in
     return pixmap
 
 
-def make_file1_icon() -> QPixmap:
-    return _render_pixmap_from_file("file1.svg")
+def make_file1_icon(size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap_from_file("file1.svg", max_size=size)
 
 
-def make_file2_icon() -> QPixmap:
-    return _render_pixmap_from_file("file2.svg")
+def make_file2_icon(size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap_from_file("file2.svg", max_size=size)

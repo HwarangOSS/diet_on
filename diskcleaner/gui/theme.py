@@ -68,7 +68,7 @@ DARK = Palette(
 )
 
 
-def _build_qss(p: Palette) -> str:
+def _build_qss(p: Palette, dark: bool) -> str:
     return f"""
 QWidget {{
     background-color: {p.bg};
@@ -141,6 +141,23 @@ QFrame#card {{
     border-radius: 8px;
 }}
 
+QLabel#statusMessage {{
+    color: {p.text_primary};
+}}
+QLabel#statusMeta {{
+    color: {p.text_secondary};
+}}
+
+QLabel#resultCapacityLabel {{
+    color: {"#FFFFFF" if dark else p.text_secondary};
+}}
+QLabel#resultGbLabel {{
+    color: {"#FFFFFF" if dark else p.text_primary};
+}}
+QLabel#resultHeading {{
+    color: {"#FFFFFF" if dark else p.text_primary};
+}}
+
 QScrollBar:vertical {{
     background: transparent;
     width: 10px;
@@ -158,8 +175,8 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
 }}
 """
-LIGHT_QSS = _build_qss(LIGHT)
-DARK_QSS = _build_qss(DARK)
+LIGHT_QSS = _build_qss(LIGHT, dark=False)
+DARK_QSS = _build_qss(DARK, dark=True)
 
 
 def apply_theme(widget, dark: bool):
