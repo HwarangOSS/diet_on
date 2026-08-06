@@ -1,62 +1,117 @@
-# 기본 디자인 시스템 & 컬러 팔레트
+# 디자인 시스템 & 컬러 팔레트
+from dataclasses import dataclass
 
-# 화이트 모드
-LIGHT_BG = "#FFFFFF"
-LIGHT_TITLE = "#3A4A63"
-LIGHT_TEXT = "#101820"
-LIGHT_TEXT_GRAY = "#555555"
-LIGHT_TEXT_GRAY_LIGHT = "#B9B9B9"
+@dataclass(frozen=True)
+class Palette:
+    bg: str                # 배경
+    surface: str            # 모달
+    border: str              # 기본 구분선
+    border_strong: str       # 강조 구분선
 
-# 다크 모드
-DARK_BG = "#101820"
-DARK_TITLE = "#FFFFFF"
-DARK_TEXT = "#FFFFFF"
-DARK_TEXT_GRAY_LIGHT = "#B9B9B9"
-DARK_TEXT_GRAY = "#555555"
+    # 텍스트
+    text_primary: str        # 본문
+    text_secondary: str      # 설명
+    text_tertiary: str       # 힌트, 캡션, 버전 표기 등
+    title: str               
 
-# 상태 색상 (라이트/다크 공통)
-ACCENT_DANGER = "#971B2F"
-ACCENT_SUCCESS = "#5A995E"
+    # 인터랙티브
+    primary: str
+    primary_hover: str
 
-LIGHT_QSS = f"""
+    # 상태
+    danger: str
+    danger_surface: str      # danger 카드 배경 
+    success: str
+    success_surface: str     # success 카드 배경 
+
+    # hover
+    hover_overlay: str
+    pressed_overlay: str
+
+
+LIGHT = Palette(
+    bg="#FFFFFF",
+    surface="#F5F6F8",
+    border="#E2E4E9",
+    border_strong="#C7CBD4",
+    text_primary="#101820",
+    text_secondary="#555555",
+    text_tertiary="#767676",
+    title="#3A4A63",
+    primary="#3A4A63",
+    primary_hover="#2C3A4F",
+    danger="#971B2F",
+    danger_surface="rgba(151, 27, 47, 0.06)",
+    success="#5A995E",
+    success_surface="rgba(90, 153, 94, 0.08)",
+    hover_overlay="rgba(0, 0, 0, 0.06)",
+    pressed_overlay="rgba(0, 0, 0, 0.10)",
+)
+
+DARK = Palette(
+    bg="#101820",
+    surface="#1A2430",
+    border="#2B3A4A",
+    border_strong="#4A5568",
+    text_primary="#F2F4F7",   
+    text_secondary="#B9B9B9",
+    text_tertiary="#8A93A3",
+    title="#FFFFFF",
+    primary="#7C9CBF",
+    primary_hover="#9AB4D1",
+    danger="#E5566E",         
+    danger_surface="rgba(229, 86, 110, 0.10)",
+    success="#7CC183",        
+    success_surface="rgba(124, 193, 131, 0.10)",
+    hover_overlay="rgba(255, 255, 255, 0.08)",
+    pressed_overlay="rgba(255, 255, 255, 0.14)",
+)
+
+
+def _build_qss(p: Palette) -> str:
+    return f"""
 QWidget {{
-    background-color: {LIGHT_BG};
-    color: {LIGHT_TEXT};
+    background-color: {p.bg};
+    color: {p.text_primary};
     font-family: "Segoe UI", "Malgun Gothic", sans-serif;
 }}
 
 QLabel#titleLabel {{
-    color: {LIGHT_TITLE};
+    color: {p.title};
 }}
 
 QLabel#clickLabel {{
-    color: {LIGHT_TEXT};
+    color: {p.text_primary};
 }}
 
 QLabel#subLabel {{
-    color: {LIGHT_TEXT_GRAY};
+    color: {p.text_secondary};
 }}
 
 QLabel#hintLabel {{
-    color: {LIGHT_TEXT_GRAY_LIGHT};
+    color: {p.text_tertiary};
 }}
 
 QFrame#dangerCard {{
-    border: 1px solid {ACCENT_DANGER};
+    background-color: {p.danger_surface};
+    border: 1px solid {p.danger};
+    border-radius: 8px;
 }}
 QLabel#dangerIcon, QLabel#dangerText {{
-    color: {ACCENT_DANGER};
+    color: {p.danger};
 }}
 
 QFrame#successCard {{
-    border: 1px solid {ACCENT_SUCCESS};
+    background-color: {p.success_surface};
+    border: 1px solid {p.success};
+    border-radius: 8px;
 }}
 QLabel#successIcon, QLabel#successText {{
-    color: {ACCENT_SUCCESS};
+    color: {p.success};
 }}
 
 QFrame#titleSeparator {{
-    background: #B9B9B9;
+    background: {p.border_strong};
 }}
 
 QPushButton#titleIconButton {{
@@ -65,76 +120,72 @@ QPushButton#titleIconButton {{
     padding: 0;
 }}
 QPushButton#titleIconButton:hover {{
-    background-color: rgba(0, 0, 0, 0.06);
+    background-color: {p.hover_overlay};
     border-radius: 4px;
 }}
+QPushButton#titleIconButton:pressed {{
+    background-color: {p.pressed_overlay};
+    border-radius: 4px;
+}}
+
 QLabel#loadingTitle {{
-    color: {LIGHT_TEXT};
+    color: {p.text_primary};
 }}
 QLabel#loadingMessage {{
-    color: {LIGHT_TEXT_GRAY};
-}}
-"""
-
-DARK_QSS = f"""
-QWidget {{
-    background-color: {DARK_BG};
-    color: {DARK_TEXT};
+    color: {p.text_secondary};
 }}
 
-QLabel#titleLabel {{
-    color: {DARK_TITLE};
-}}
-
-QLabel#clickLabel {{
-    color: {DARK_TEXT};
-}}
-
-QLabel#subLabel {{
-    color: {DARK_TEXT};
-}}
-
-QLabel#hintLabel {{
-    color: {DARK_TEXT_GRAY_LIGHT};
-}}
-
-QFrame#dangerCard {{
-    border: 1px solid {ACCENT_DANGER};
+QFrame#card {{
+    background-color: {p.surface};
+    border: 1px solid {p.border};
     border-radius: 8px;
 }}
-QLabel#dangerIcon, QLabel#dangerText {{
-    color: {ACCENT_DANGER};
-}}
 
-QFrame#successCard {{
-    border: 1px solid {ACCENT_SUCCESS};
-    border-radius: 8px;
-}}
-QLabel#successIcon, QLabel#successText {{
-    color: {ACCENT_SUCCESS};
-}}
-
-QFrame#titleSeparator {{
-    background: #4A5568;
-}}
-
-QPushButton#titleIconButton {{
+QScrollBar:vertical {{
     background: transparent;
-    border: none;
-    padding: 0;
+    width: 10px;
+    margin: 0;
 }}
-QPushButton#titleIconButton:hover {{
-    background-color: rgba(255, 255, 255, 0.08);
-    border-radius: 4px;
+QScrollBar::handle:vertical {{
+    background: {p.border_strong};
+    border-radius: 5px;
+    min-height: 24px;
 }}
-QLabel#loadingTitle {{
-    color: {DARK_TEXT};
+QScrollBar::handle:vertical:hover {{
+    background: {p.text_tertiary};
 }}
-QLabel#loadingMessage {{
-    color: {DARK_TEXT};
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0;
 }}
 """
+LIGHT_QSS = _build_qss(LIGHT)
+DARK_QSS = _build_qss(DARK)
 
 
 def apply_theme(widget, dark: bool):
     widget.setStyleSheet(DARK_QSS if dark else LIGHT_QSS)
+
+
+def palette_for(dark: bool) -> Palette:
+    return DARK if dark else LIGHT
+
+
+# ---------------------------------------------------------------------------
+# 하위 호환용 별칭 — 기존에 LIGHT_BG, ACCENT_DANGER 식으로 직접 import하던
+# 코드가 있다면 그대로 동작하도록 남겨둠. 새 코드에서는 palette_for()나
+# LIGHT/DARK 객체를 직접 쓰는 걸 권장.
+# ---------------------------------------------------------------------------
+LIGHT_BG = LIGHT.bg
+LIGHT_TITLE = LIGHT.title
+LIGHT_TEXT = LIGHT.text_primary
+LIGHT_TEXT_GRAY = LIGHT.text_secondary
+LIGHT_TEXT_GRAY_LIGHT = LIGHT.text_tertiary
+
+DARK_BG = DARK.bg
+DARK_TITLE = DARK.title
+DARK_TEXT = DARK.text_primary
+DARK_TEXT_GRAY = DARK.text_secondary
+DARK_TEXT_GRAY_LIGHT = DARK.text_tertiary
+
+ACCENT_DANGER = LIGHT.danger   # 주의: 다크에서는 DARK.danger를 써야 대비가 맞음
+ACCENT_SUCCESS = LIGHT.success  # 주의: 다크에서는 DARK.success를 써야 대비가 맞음
