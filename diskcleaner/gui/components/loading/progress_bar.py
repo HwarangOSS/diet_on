@@ -1,14 +1,17 @@
 from PySide6.QtCore import Property, QEasingCurve, QPropertyAnimation, QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QWidget
+from gui.theme import palette_for
 
 BAR_WIDTH = 513
 BAR_HEIGHT = 22
 RADIUS = BAR_HEIGHT / 2
 
-LIGHT_TRACK_COLOR = "#FFFFFF"
-DARK_TRACK_COLOR = "#101820"
-FILL_COLOR = "#3A4A63"
+
+def _with_alpha(hex_color: str, alpha: int) -> QColor:
+    color = QColor(hex_color)
+    color.setAlpha(alpha)
+    return color
 
 
 class LoadingProgressBar(QWidget):
@@ -53,17 +56,17 @@ class LoadingProgressBar(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        track_color = DARK_TRACK_COLOR if self._is_dark else LIGHT_TRACK_COLOR
+        p = palette_for(self._is_dark)
 
         track_path = QPainterPath()
         track_rect = QRectF(0, 0, self.width(), self.height())
         track_path.addRoundedRect(track_rect, RADIUS, RADIUS)
 
         painter.setPen(Qt.NoPen)
-        painter.setBrush(QColor(track_color))
+        painter.setBrush(QColor(p.bg))
         painter.drawPath(track_path)
 
-        painter.setPen(QColor(58, 74, 99, 128))  # rgba(58,74,99,0.5) 근사
+        painter.setPen(_with_alpha(p.primary, 128))
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(track_path)
 
@@ -78,7 +81,7 @@ class LoadingProgressBar(QWidget):
             fill_path.addRoundedRect(fill_rect, RADIUS, RADIUS)
 
             painter.setPen(Qt.NoPen)
-            painter.setBrush(QColor(FILL_COLOR))
+            painter.setBrush(QColor(p.primary))
             painter.drawPath(fill_path)
 
         painter.end()

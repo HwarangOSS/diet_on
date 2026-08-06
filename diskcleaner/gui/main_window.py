@@ -33,7 +33,7 @@ class MainWindow(QWidget):
         self._resize_edge = None
         self._start_pos = None
         self._start_geo = None
-        self._cursor_overridden = False  # --- 추가 ---
+        self._cursor_overridden = False 
 
     def _enable_edge_resize_for(self, widget: QWidget):
         widget.setMouseTracking(True)
