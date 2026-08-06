@@ -1,7 +1,6 @@
 # 테스트코드
 from diskcleaner.core.smart_cleanup import SmartCleanupEngine
 from diskcleaner.gui.analysis_worker import AnalysisWorker
-
 from tests.gui.factories import make_report
 
 

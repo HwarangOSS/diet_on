@@ -1,6 +1,5 @@
 # 테스트코드
 from diskcleaner.gui.result_mapping import report_to_results
-
 from tests.gui.factories import make_duplicate_group, make_file, make_report
 
 
