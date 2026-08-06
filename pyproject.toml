@@ -40,6 +40,7 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=3.0",
     "pytest-benchmark>=4.0",
+    "pytest-qt>=4.2",
     "black>=22.0",
     "isort>=5.0",
     "flake8>=4.0",
