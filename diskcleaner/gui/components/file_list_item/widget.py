@@ -30,7 +30,10 @@ class FileListItem(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(
-            styles.BASE_PADDING_H, styles.BASE_PADDING_V, styles.BASE_PADDING_H, styles.BASE_PADDING_V
+            styles.BASE_PADDING_H,
+            styles.BASE_PADDING_V,
+            styles.BASE_PADDING_H,
+            styles.BASE_PADDING_V,
         )
         layout.setSpacing(styles.BASE_ROW_GAP)
 
@@ -70,7 +73,7 @@ class FileListItem(QWidget):
         self.setFixedSize(styles.BASE_WIDTH, styles.BASE_HEIGHT)
         self._refresh_style()
 
-    # API 
+    # API
     def set_file(self, name: str, path: str, size_bytes: int, hashtags: list[str] | None = None):
         self.name_label.setText(name)
         self.path_label.setText(path)
@@ -109,9 +112,7 @@ class FileListItem(QWidget):
         scale = max(styles.SCALE_MIN, min(scale, styles.SCALE_MAX))
         self._scale = scale
 
-        self.setFixedSize(
-            round(styles.BASE_WIDTH * scale), round(styles.BASE_HEIGHT * scale)
-        )
+        self.setFixedSize(round(styles.BASE_WIDTH * scale), round(styles.BASE_HEIGHT * scale))
 
         h_margin = round(styles.BASE_PADDING_H * scale)
         v_margin = round(styles.BASE_PADDING_V * scale)

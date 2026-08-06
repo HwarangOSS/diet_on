@@ -48,7 +48,7 @@ class DuplicateGroupBox(QWidget):
 
         self._refresh_style()
 
-    # API 
+    # API
     def set_group(self, group_name: str, files: list[dict]):
         """
         files: [{"name": str, "path": str, "size_bytes": int}, ...]
@@ -67,7 +67,7 @@ class DuplicateGroupBox(QWidget):
             item = FileListItem()
             item.set_file(f["name"], f["path"], f["size_bytes"])
             item.set_dark(self._is_dark)
-            item.set_selected(i != 0)  
+            item.set_selected(i != 0)
             item.toggled.connect(lambda selected, idx=i: self.file_toggled.emit(idx, selected))
             self.items_layout.addWidget(item)
             self._items.append(item)

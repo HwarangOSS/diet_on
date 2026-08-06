@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import headline
+
 from . import icons
 from .more_menu import MoreMenu
 

@@ -10,7 +10,7 @@ BUTTON_TEXT_SELECTED = "선택 삭제"
 
 
 class DeletePage(QWidget):
-    delete_requested = Signal(list)  
+    delete_requested = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,7 +51,7 @@ class DeletePage(QWidget):
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
 
-    # API 
+    # API
     def set_files(self, files: list[dict]):
         for item in self._items:
             self.list_layout.removeWidget(item)

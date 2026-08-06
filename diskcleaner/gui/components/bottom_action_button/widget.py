@@ -1,12 +1,4 @@
-from PySide6.QtCore import (
-    Property,
-    QEasingCurve,
-    QPointF,
-    QPropertyAnimation,
-    QRectF,
-    Qt,
-    Signal,
-)
+from PySide6.QtCore import Property, QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 

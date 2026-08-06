@@ -1,7 +1,12 @@
 # 테스트코드
 from PySide6.QtCore import Qt
 
-from diskcleaner.gui.pages.result import CARD_TEXTS, CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
+from diskcleaner.gui.pages.result import (
+    CARD_TEXTS,
+    CATEGORY_DELETE_TARGET,
+    CATEGORY_DUPLICATE,
+    ResultPage,
+)
 
 SAMPLE_RESULTS = {
     "delete_target": {"count": 5, "size_bytes": 1_073_741_824},

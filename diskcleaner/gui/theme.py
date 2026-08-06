@@ -1,18 +1,19 @@
 # 디자인 시스템 & 컬러 팔레트
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class Palette:
-    bg: str                # 배경
-    surface: str            # 모달
-    border: str              # 기본 구분선
-    border_strong: str       # 강조 구분선
+    bg: str  # 배경
+    surface: str  # 모달
+    border: str  # 기본 구분선
+    border_strong: str  # 강조 구분선
 
     # 텍스트
-    text_primary: str        # 본문
-    text_secondary: str      # 설명
-    text_tertiary: str       # 힌트, 캡션, 버전 표기 등
-    title: str               
+    text_primary: str  # 본문
+    text_secondary: str  # 설명
+    text_tertiary: str  # 힌트, 캡션, 버전 표기 등
+    title: str
 
     # 인터랙티브
     primary: str
@@ -20,9 +21,9 @@ class Palette:
 
     # 상태
     danger: str
-    danger_surface: str      # danger 카드 배경 
+    danger_surface: str  # danger 카드 배경
     success: str
-    success_surface: str     # success 카드 배경 
+    success_surface: str  # success 카드 배경
 
     # hover
     hover_overlay: str
@@ -53,15 +54,15 @@ DARK = Palette(
     surface="#1A2430",
     border="#2B3A4A",
     border_strong="#4A5568",
-    text_primary="#F2F4F7",   
+    text_primary="#F2F4F7",
     text_secondary="#B9B9B9",
     text_tertiary="#8A93A3",
     title="#FFFFFF",
     primary="#7C9CBF",
     primary_hover="#9AB4D1",
-    danger="#E5566E",         
+    danger="#E5566E",
     danger_surface="rgba(229, 86, 110, 0.10)",
-    success="#7CC183",        
+    success="#7CC183",
     success_surface="rgba(124, 193, 131, 0.10)",
     hover_overlay="rgba(255, 255, 255, 0.08)",
     pressed_overlay="rgba(255, 255, 255, 0.14)",
@@ -179,6 +180,8 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0;
 }}
 """
+
+
 LIGHT_QSS = _build_qss(LIGHT, dark=False)
 DARK_QSS = _build_qss(DARK, dark=True)
 

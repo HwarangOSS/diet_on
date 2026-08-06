@@ -154,4 +154,7 @@ per-file-ignores = [
     "examples/archive_demo.py:E402,F541",
     "diskcleaner/gui/components/power_button/icons.py:E501",
     "diskcleaner/gui/components/titlebar/icons.py:E501",
+    "diskcleaner/gui/components/status_card/icons.py:E501",
+    "diskcleaner/gui/components/status_card/icons.py:E501"
+
 ]

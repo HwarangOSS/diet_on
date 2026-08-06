@@ -10,7 +10,7 @@ BUTTON_TEXT_SELECTED = "선택 삭제"
 
 
 class DuplicatePage(QWidget):
-    delete_requested = Signal(list) 
+    delete_requested = Signal(list)
 
     def __init__(self, parent=None):
         super().__init__(parent)

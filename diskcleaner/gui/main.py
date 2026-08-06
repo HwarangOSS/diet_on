@@ -21,7 +21,6 @@ from diskcleaner.gui.settings import load_dark_mode, save_dark_mode
 from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.typo import set_global_scale
 
-
 PROGRESS_TICK_MS = 200
 PROGRESS_TICK_STEP = 3
 PROGRESS_TICK_CAP = 90

@@ -64,8 +64,7 @@ def report_to_duplicate_groups(report: CleanupReport) -> list:
             {
                 "name": files_sorted[0].name,
                 "files": [
-                    {"path": f.path, "name": f.name, "size_bytes": f.size}
-                    for f in files_sorted
+                    {"path": f.path, "name": f.name, "size_bytes": f.size} for f in files_sorted
                 ],
             }
         )
