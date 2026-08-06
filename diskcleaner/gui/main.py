@@ -1,7 +1,7 @@
 ﻿import sys
 
 from dotenv import load_dotenv
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QObject, QTimer
 from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
 
 from diskcleaner.gui.analysis_worker import start_analysis
@@ -25,6 +25,19 @@ from diskcleaner.gui.typo import set_global_scale
 PROGRESS_TICK_MS = 200
 PROGRESS_TICK_STEP = 3
 PROGRESS_TICK_CAP = 90
+
+
+class _AnalysisBridge(QObject):
+    def __init__(self, on_finished, on_error):
+        super().__init__()
+        self._on_finished = on_finished
+        self._on_error = on_error
+
+    def handle_finished(self, report):
+        self._on_finished(report)
+
+    def handle_error(self, message):
+        self._on_error(message)
 
 
 def main():
@@ -63,6 +76,7 @@ def main():
     state = {
         "thread": None,
         "worker": None,
+        "bridge": None,
         "progress_timer": None,
         "progress_value": 0,
         "report": None,
@@ -111,10 +125,12 @@ def main():
         print(f"[DEBUG] 스캔 요청됨! 대상: {scan_path}")
 
         thread, worker = start_analysis(scan_path)
-        worker.finished.connect(on_analysis_finished)
-        worker.error.connect(on_analysis_error)
+        bridge = _AnalysisBridge(on_analysis_finished, on_analysis_error)
+        worker.finished.connect(bridge.handle_finished)
+        worker.error.connect(bridge.handle_error)
         state["thread"] = thread
         state["worker"] = worker
+        state["bridge"] = bridge
         thread.start()
 
         state["progress_value"] = 0
