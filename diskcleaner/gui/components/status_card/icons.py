@@ -1,0 +1,42 @@
+from PySide6.QtCore import QByteArray, QRectF, Qt
+from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtSvg import QSvgRenderer
+
+ICON_SIZE = 24
+
+SVG_WARNING = """
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <path d="M4.88461 27.5086C3.35645 26.0327 2.13753 24.2671 1.29899 22.3151C0.460445 20.363 0.0190652 18.2635 0.000604108 16.139C-0.017857 14.0146 0.38697 11.9077 1.19146 9.94135C1.99596 7.97501 3.18401 6.18857 4.68629 4.68629C6.18857 3.18401 7.97501 1.99596 9.94135 1.19146C11.9077 0.38697 14.0146 -0.017857 16.139 0.000604108C18.2635 0.0190652 20.363 0.460445 22.3151 1.29899C24.2671 2.13753 26.0327 3.35645 27.5086 4.88461C30.4231 7.90225 32.0359 11.9439 31.9994 16.139C31.9629 20.3342 30.2802 24.3472 27.3137 27.3137C24.3472 30.2802 20.3342 31.9629 16.139 31.9994C11.9439 32.0359 7.90225 30.4231 4.88461 27.5086ZM25.2526 25.2526C27.6544 22.8508 29.0037 19.5933 29.0037 16.1966C29.0037 12.8 27.6544 9.54241 25.2526 7.14061C22.8508 4.73881 19.5933 3.38949 16.1966 3.38949C12.8 3.38949 9.54241 4.73881 7.14061 7.14061C4.73881 9.54241 3.38949 12.8 3.38949 16.1966C3.38949 19.5933 4.73881 22.8508 7.14061 25.2526C9.54241 27.6544 12.8 29.0037 16.1966 29.0037C19.5933 29.0037 22.8508 27.6544 25.2526 25.2526ZM14.5966 8.19661H17.7966V17.7966H14.5966V8.19661ZM14.5966 20.9966H17.7966V24.1966H14.5966V20.9966Z" fill="{color}"/>
+</svg>
+"""
+
+SVG_CHECK = """
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M20 35C21.9698 35 23.9204 34.612 25.7403 33.8582C27.5601 33.1044 29.2137 31.9995 30.6066 30.6066C31.9995 29.2137 33.1044 27.5601 33.8582 25.7403C34.612 23.9204 35 21.9698 35 20C35 18.0302 34.612 16.0796 33.8582 14.2597C33.1044 12.4399 31.9995 10.7863 30.6066 9.3934C29.2137 8.00052 27.5601 6.89563 25.7403 6.14181C23.9204 5.38799 21.9698 5 20 5C16.0218 5 12.2064 6.58035 9.3934 9.3934C6.58035 12.2064 5 16.0218 5 20C5 23.9782 6.58035 27.7936 9.3934 30.6066C12.2064 33.4196 16.0218 35 20 35ZM19.6133 26.0667L27.9467 16.0667L25.3867 13.9333L18.22 22.5317L14.5117 18.8217L12.155 21.1783L17.155 26.1783L18.445 27.4683L19.6133 26.0667Z" fill="{color}"/>
+</svg>
+"""
+
+
+def _render_pixmap(svg_str: str, color: str, size: int = ICON_SIZE, scale: int = 3) -> QPixmap:
+    svg = svg_str.format(color=color)
+    renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+
+    render_size = size * scale
+    pixmap = QPixmap(render_size, render_size)
+    pixmap.fill(Qt.transparent)
+
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.Antialiasing)
+    renderer.render(painter, QRectF(0, 0, render_size, render_size))
+    painter.end()
+
+    pixmap.setDevicePixelRatio(scale)
+    return pixmap
+
+
+def make_warning_icon(color: str, size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap(SVG_WARNING, color, size)
+
+
+def make_check_icon(color: str, size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap(SVG_CHECK, color, size)
