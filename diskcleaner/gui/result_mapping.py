@@ -1,4 +1,10 @@
+from diskcleaner.core.deletion_pipeline import DeletionPlan
 from diskcleaner.core.smart_cleanup import CleanupReport
+
+# LLM을 안 거치는 safe 파일(캐시/로그/임시)은 plan.llm_results에 없으니 이 카테고리로 묶는다.
+# "안전"이라고 하면 "삭제 안 해도 되는 파일"로 오해하기 쉬워서, AI 확인 없이도 확실히
+# 지워도 되는 파일이라는 의미로 이름을 바꿈.
+SAFE_CATEGORY_LABEL = "즉시 삭제 가능"
 
 # FileClassifier의 타입 카테고리가 중국어로 돼있어서(diskcleaner/core/classifier.py
 # type_categories) 그대로 해시태그에 노출하면 안 됨 - 우선 자주 나오는 것만
@@ -27,14 +33,27 @@ def _build_type_lookup(report: CleanupReport) -> dict:
     return lookup
 
 
-def report_to_delete_files(report: CleanupReport) -> list:
+def report_to_delete_files(report: CleanupReport, plan: DeletionPlan | None = None) -> list:
     """삭제 상세 페이지(FileListItem 리스트)가 바로 쓸 수 있는 형식으로 변환.
 
-    반환: [{"path": str, "name": str, "size_bytes": int, "hashtags": [str]}, ...]
+    plan이 주어지면 AI가 삭제 대상에서 제외한(excluded) 파일은 빠지고, LLM이 남긴
+    삭제 사유/카테고리가 있으면 "reason"/"category"에 채워짐 (category는 상세 화면에서
+    같은 카테고리끼리 묶어서 일괄 선택하는 데 씀). plan이 없으면(AI 판단 전) 기존처럼
+    safe+confirm_needed를 그대로 보여줌.
+
+    반환: [{"path", "name", "size_bytes", "hashtags": [str], "reason": str | None,
+            "category": str}, ...]
     """
     type_lookup = _build_type_lookup(report)
-    safe_files = report.by_risk.get("safe", [])
-    confirm_files = report.by_risk.get("confirm_needed", [])
+
+    if plan is not None:
+        files = plan.auto_delete + plan.review_queue
+        llm_lookup = {
+            path: result for path, result in plan.llm_results.items() if isinstance(result, dict)
+        }
+    else:
+        files = report.by_risk.get("safe", []) + report.by_risk.get("confirm_needed", [])
+        llm_lookup = {}
 
     return [
         {
@@ -42,8 +61,10 @@ def report_to_delete_files(report: CleanupReport) -> list:
             "name": f.name,
             "size_bytes": f.size,
             "hashtags": [type_lookup[f.path]] if f.path in type_lookup else [],
+            "reason": llm_lookup.get(f.path, {}).get("reason"),
+            "category": llm_lookup.get(f.path, {}).get("category", SAFE_CATEGORY_LABEL),
         }
-        for f in safe_files + confirm_files
+        for f in files
     ]
 
 
@@ -71,10 +92,21 @@ def report_to_duplicate_groups(report: CleanupReport) -> list:
     return groups
 
 
-def report_to_results(report: CleanupReport) -> dict:
-    safe_files = report.by_risk.get("safe", [])
-    confirm_files = report.by_risk.get("confirm_needed", [])
-    delete_target_files = safe_files + confirm_files
+def report_to_results(report: CleanupReport, plan: DeletionPlan | None = None) -> dict:
+    """ "삭제가 필요한 파일을 발견했어요" 카드 숫자.
+
+    plan이 있으면 AI가 실제로 삭제를 추천한 auto_delete만 센다 (review_queue는
+    AI가 판단을 못해 사용자 확인이 필요한 별개 상태라 여기 합산하면 "전부 삭제
+    필요"로 과대표시됨). auto_delete에는 규칙 기반으로 확실히 안전한 safe 파일과
+    AI가 검토해서 승인한 confirm_needed 파일이 같이 들어있는데, 상세화면에서
+    "즉시 삭제 가능"/AI 카테고리로 나눠 보여주므로 요약 카드는 합산해도 된다.
+    """
+    if plan is not None:
+        delete_target_files = plan.auto_delete
+    else:
+        safe_files = report.by_risk.get("safe", [])
+        confirm_files = report.by_risk.get("confirm_needed", [])
+        delete_target_files = safe_files + confirm_files
 
     duplicate_count = sum(group.count for group in report.duplicates)
 

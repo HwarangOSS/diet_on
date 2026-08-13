@@ -135,6 +135,9 @@ QLabel#loadingTitle {{
 QLabel#loadingMessage {{
     color: {p.text_secondary};
 }}
+QLabel#loadingPathLabel {{
+    color: {p.text_tertiary};
+}}
 
 QFrame#card {{
     background-color: {p.surface};
@@ -158,9 +161,21 @@ QLabel#resultGbLabel {{
 QLabel#resultHeading {{
     color: {"#FFFFFF" if dark else p.text_primary};
 }}
+QLabel#resultPathLabel {{
+    color: {p.text_tertiary};
+}}
 
 QLabel#detailTitle {{
     color: {"#FFFFFF" if dark else p.text_primary};
+}}
+QLabel#detailBackLabel {{
+    color: {p.primary};
+}}
+QLabel#deleteGroupTitle {{
+    color: {p.text_secondary};
+}}
+QCheckBox#deleteGroupCheckbox {{
+    color: {p.primary};
 }}
 
 QScrollBar:vertical {{

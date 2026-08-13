@@ -1,16 +1,21 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
-from diskcleaner.gui.typo import headline_small
+from diskcleaner.gui.result_mapping import SAFE_CATEGORY_LABEL
+from diskcleaner.gui.typo import body_mini, headline_small
 
 BUTTON_TEXT_DEFAULT = "전체 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
+CHEVRON_EXPANDED = "▼"
+CHEVRON_COLLAPSED = "▶"
+
 
 class DeletePage(QWidget):
     delete_requested = Signal(list)
+    back_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -18,11 +23,20 @@ class DeletePage(QWidget):
 
         self._items: list[FileListItem] = []
         self._files: list[dict] = []
+        self._group_headers: list[QWidget] = []
+        self._group_sections: dict[str, dict] = {}
         self._is_dark = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(16)
+
+        self.back_label = QLabel("‹ 뒤로")
+        self.back_label.setObjectName("detailBackLabel")
+        self.back_label.setFont(body_mini())
+        self.back_label.setCursor(Qt.PointingHandCursor)
+        self.back_label.mousePressEvent = lambda _event: self.back_requested.emit()
+        layout.addWidget(self.back_label, alignment=Qt.AlignLeft)
 
         self.title_label = QLabel("Delete")
         self.title_label.setObjectName("detailTitle")
@@ -58,17 +72,51 @@ class DeletePage(QWidget):
             item.setParent(None)
             item.deleteLater()
         self._items.clear()
-        self._files = files
+        for header in self._group_headers:
+            self.list_layout.removeWidget(header)
+            header.setParent(None)
+            header.deleteLater()
+        self._group_headers.clear()
+        self._group_sections.clear()
+        self._files = []
 
+        groups: dict[str, list[dict]] = {}
         for f in files:
-            item = FileListItem()
-            item.set_file(f["name"], f["path"], f["size_bytes"], f.get("hashtags"))
-            item.set_dark(self._is_dark)
-            item.toggled.connect(self._on_item_toggled)
-            self.list_layout.insertWidget(self.list_layout.count() - 1, item)
-            self._items.append(item)
+            groups.setdefault(f.get("category") or SAFE_CATEGORY_LABEL, []).append(f)
+
+        insert_at = self.list_layout.count() - 1  # 맨 끝 stretch 앞에 계속 끼워넣음
+        for category, group_files in groups.items():
+            header, title_label, checkbox = self._make_group_header(category, len(group_files))
+            self.list_layout.insertWidget(insert_at, header)
+            insert_at += 1
+            self._group_headers.append(header)
+
+            group_items: list[FileListItem] = []
+            for f in group_files:
+                item = FileListItem()
+                item.set_file(
+                    f["name"], f["path"], f["size_bytes"], f.get("hashtags"), f.get("reason")
+                )
+                item.set_dark(self._is_dark)
+                item.toggled.connect(self._on_item_toggled)
+                self.list_layout.insertWidget(insert_at, item)
+                insert_at += 1
+                self._items.append(item)
+                group_items.append(item)
+                self._files.append(f)
+
+            self._group_sections[category] = {
+                "items": group_items,
+                "title_label": title_label,
+                "checkbox": checkbox,
+                "base_text": f"{category} ({len(group_files)})",
+                "collapsed": False,
+            }
+            checkbox.clicked.connect(lambda _checked, items=group_items: self._toggle_group(items))
+            header.mousePressEvent = lambda _event, cat=category: self._toggle_collapse(cat)
 
         self._refresh_button_text()
+        self._refresh_group_checkboxes()
 
     def apply_theme(self, dark: bool):
         self._is_dark = dark
@@ -82,15 +130,71 @@ class DeletePage(QWidget):
         self.action_button.update_responsive_size(container_width)
 
     def refresh_fonts(self):
+        self.back_label.setFont(body_mini())
         self.title_label.setFont(headline_small())
+        for section in self._group_sections.values():
+            section["title_label"].setFont(body_mini())
+            section["checkbox"].setFont(body_mini())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.update_responsive_size(self.width())
 
     # 내부
+    def _make_group_header(self, category: str, count: int) -> tuple[QWidget, QLabel, QCheckBox]:
+        header = QWidget()
+        header.setObjectName("deleteGroupHeader")
+        header.setCursor(Qt.PointingHandCursor)
+        row = QHBoxLayout(header)
+        row.setContentsMargins(4, 0, 4, 0)
+
+        title = QLabel(f"{CHEVRON_EXPANDED} {category} ({count})")
+        title.setObjectName("deleteGroupTitle")
+        title.setFont(body_mini())
+        row.addWidget(title)
+        row.addStretch()
+
+        checkbox = QCheckBox("전체 선택")
+        checkbox.setObjectName("deleteGroupCheckbox")
+        checkbox.setFont(body_mini())
+        checkbox.setTristate(True)
+        checkbox.setCursor(Qt.PointingHandCursor)
+        row.addWidget(checkbox)
+
+        return header, title, checkbox
+
+    def _toggle_group(self, items: list[FileListItem]):
+        select_all = not all(item.is_selected() for item in items)
+        for item in items:
+            item.set_selected(select_all, emit=False)
+        self._refresh_button_text()
+        self._refresh_group_checkboxes()
+
+    def _refresh_group_checkboxes(self):
+        for section in self._group_sections.values():
+            states = [item.is_selected() for item in section["items"]]
+            checkbox = section["checkbox"]
+            checkbox.blockSignals(True)
+            if all(states):
+                checkbox.setCheckState(Qt.Checked)
+            elif not any(states):
+                checkbox.setCheckState(Qt.Unchecked)
+            else:
+                checkbox.setCheckState(Qt.PartiallyChecked)
+            checkbox.blockSignals(False)
+
+    def _toggle_collapse(self, category: str):
+        section = self._group_sections[category]
+        collapsed = not section["collapsed"]
+        section["collapsed"] = collapsed
+        for item in section["items"]:
+            item.setVisible(not collapsed)
+        chevron = CHEVRON_COLLAPSED if collapsed else CHEVRON_EXPANDED
+        section["title_label"].setText(f"{chevron} {section['base_text']}")
+
     def _on_item_toggled(self, _selected: bool):
         self._refresh_button_text()
+        self._refresh_group_checkboxes()
 
     def _refresh_button_text(self):
         all_selected = all(item.is_selected() for item in self._items)

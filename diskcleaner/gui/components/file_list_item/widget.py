@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.theme import DARK, LIGHT
@@ -29,6 +29,7 @@ class FileListItem(QWidget):
         self._is_selected = True
         self._scale = 1.0
         self._press_inside = False
+        self._reason = ""
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(
@@ -60,6 +61,12 @@ class FileListItem(QWidget):
         self.path_label.setFont(body_md())
         layout.addWidget(self.path_label)
 
+        self.reason_label = QLabel()
+        self.reason_label.setObjectName("fileItemReason")
+        self.reason_label.setFont(body_mini())
+        self.reason_label.hide()
+        layout.addWidget(self.reason_label)
+
         layout.addStretch()
 
         bottom_row = QHBoxLayout()
@@ -76,7 +83,14 @@ class FileListItem(QWidget):
         self._refresh_style()
 
     # API
-    def set_file(self, name: str, path: str, size_bytes: int, hashtags: list[str] | None = None):
+    def set_file(
+        self,
+        name: str,
+        path: str,
+        size_bytes: int,
+        hashtags: list[str] | None = None,
+        reason: str | None = None,
+    ):
         self.name_label.setText(name)
         self.path_label.setText(path)
         self.size_label.setText(styles.format_file_size(size_bytes))
@@ -88,6 +102,26 @@ class FileListItem(QWidget):
         else:
             self.hashtag_label.setText("")
             self.hashtag_label.hide()
+
+        self._reason = reason or ""
+        if self._reason:
+            self.setToolTip(self._reason)
+            self._refresh_reason_text()
+            self.reason_label.show()
+        else:
+            self.setToolTip("")
+            self.reason_label.setText("")
+            self.reason_label.hide()
+
+    def _refresh_reason_text(self):
+        if not self._reason:
+            return
+        metrics = QFontMetrics(self.reason_label.font())
+        available_width = self.width() - 2 * round(styles.BASE_PADDING_H * self._scale)
+        elided = metrics.elidedText(
+            f"AI 사유: {self._reason}", Qt.ElideRight, max(available_width, 0)
+        )
+        self.reason_label.setText(elided)
 
     def set_hashtag_visible(self, visible: bool):
         self.hashtag_label.setVisible(visible)
@@ -120,6 +154,7 @@ class FileListItem(QWidget):
         v_margin = round(styles.BASE_PADDING_V * scale)
         self.layout().setContentsMargins(h_margin, v_margin, h_margin, v_margin)
         self.layout().setSpacing(round(styles.BASE_ROW_GAP * scale))
+        self._refresh_reason_text()
         self.update()
 
     # 이벤트
@@ -146,12 +181,18 @@ class FileListItem(QWidget):
     def _text_color(self) -> str:
         return "#FFFFFF" if self._is_dark else LIGHT.text_primary
 
+    def _reason_color(self) -> str:
+        return DARK.text_tertiary if self._is_dark else LIGHT.text_tertiary
+
     def _refresh_style(self):
         color = self._text_color()
+        reason_color = self._reason_color()
         self.setStyleSheet(
             "QLabel#fileItemName, QLabel#fileItemPath, "
             "QLabel#fileItemHashtag, QLabel#fileItemSize {"
             f" color: {color}; background: transparent; }}"
+            "QLabel#fileItemReason {"
+            f" color: {reason_color}; background: transparent; }}"
         )
 
     def paintEvent(self, event):

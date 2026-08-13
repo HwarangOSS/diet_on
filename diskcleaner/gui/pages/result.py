@@ -1,10 +1,11 @@
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.loading import icons as loading_icons
 from diskcleaner.gui.components.status_card import STATUS_DANGER, STATUS_SUCCESS, StatusCard
 from diskcleaner.gui.components.status_card.styles import format_gb
-from diskcleaner.gui.typo import body_md, headline, headline_small
+from diskcleaner.gui.typo import body_md, body_mini, headline, headline_small
 
 SUMMARY_ICON_SIZE = 120
 
@@ -12,9 +13,11 @@ CATEGORY_DELETE_TARGET = "delete_target"
 CATEGORY_DUPLICATE = "duplicate"
 
 CARD_TEXTS = {
+    # "즉시 삭제 가능"(규칙 기반, LLM 미개입) 파일도 이 카드에 합산되므로 "AI가"라고
+    # 단정하지 않음 - 상세화면에 들어가면 카테고리별로 구분해서 보여줌.
     CATEGORY_DELETE_TARGET: {
-        "found": "AI가 삭제가 필요한 파일을 발견했어요",
-        "empty": "AI가 삭제할 파일을 발견하지 못했어요",
+        "found": "삭제가 필요한 파일을 발견했어요",
+        "empty": "삭제할 파일을 발견하지 못했어요",
     },
     CATEGORY_DUPLICATE: {
         "found": "AI가 중복 파일을 발견했어요",
@@ -29,6 +32,8 @@ class ResultPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("resultPage")
+
+        self._scan_path = ""
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -66,6 +71,13 @@ class ResultPage(QWidget):
         self.heading_label.setFont(headline_small())
         layout.addWidget(self.heading_label)
 
+        self.path_label = QLabel()
+        self.path_label.setObjectName("resultPathLabel")
+        self.path_label.setFont(body_mini())
+        layout.addWidget(self.path_label)
+
+        layout.addSpacing(4)
+
         self.cards_layout = QVBoxLayout()
         self.cards_layout.setSpacing(12)
         layout.addLayout(self.cards_layout)
@@ -79,6 +91,19 @@ class ResultPage(QWidget):
             self._cards[key] = card
 
     # API ----
+    def set_path(self, path: str):
+        self._scan_path = path
+        self._refresh_path_text()
+
+    def _refresh_path_text(self):
+        if not self._scan_path:
+            self.path_label.setText("")
+            return
+        metrics = QFontMetrics(self.path_label.font())
+        available_width = max(self.width() - 40, 0)
+        elided = metrics.elidedText(f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width)
+        self.path_label.setText(elided)
+
     def set_results(self, results: dict):
         total_bytes = 0
         for key, card in self._cards.items():
@@ -106,7 +131,10 @@ class ResultPage(QWidget):
         self.capacity_label.setFont(body_md())
         self.gb_label.setFont(headline())
         self.heading_label.setFont(headline_small())
+        self.path_label.setFont(body_mini())
+        self._refresh_path_text()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.update_responsive_size(self.width())
+        self._refresh_path_text()

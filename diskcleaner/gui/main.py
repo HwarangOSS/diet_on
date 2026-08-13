@@ -1,9 +1,11 @@
 ﻿import sys
+from pathlib import Path
 
 from dotenv import load_dotenv
 from PySide6.QtCore import QObject, QTimer
 from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
 
+from diskcleaner.core.deletion_pipeline import delete_plan
 from diskcleaner.gui.analysis_worker import start_analysis
 from diskcleaner.gui.components.titlebar import TitleBar
 from diskcleaner.gui.main_window import MainWindow
@@ -20,6 +22,7 @@ from diskcleaner.gui.result_mapping import (
 from diskcleaner.gui.settings import load_dark_mode, save_dark_mode
 from diskcleaner.gui.theme import apply_theme
 from diskcleaner.gui.typo import set_global_scale
+from diskcleaner.optimization.delete import DeletionManager
 
 PROGRESS_TICK_MS = 200
 PROGRESS_TICK_STEP = 3
@@ -32,8 +35,8 @@ class _AnalysisBridge(QObject):
         self._on_finished = on_finished
         self._on_error = on_error
 
-    def handle_finished(self, report):
-        self._on_finished(report)
+    def handle_finished(self, report, plan):
+        self._on_finished(report, plan)
 
     def handle_error(self, message):
         self._on_error(message)
@@ -79,7 +82,10 @@ def main():
         "progress_timer": None,
         "progress_value": 0,
         "report": None,
+        "plan": None,
+        "scan_path": None,
     }
+    deletion_manager = DeletionManager()
 
     def _stop_progress_timer():
         timer = state["progress_timer"]
@@ -98,14 +104,16 @@ def main():
             loading.update_progress(state["progress_value"])
             print(f"[진행] {state['progress_value']}% (스캔 백그라운드 진행 중)")
 
-    def on_analysis_finished(report):
+    def on_analysis_finished(report, plan):
         _stop_progress_timer()
         _wait_for_thread()
         loading.update_progress(100)
         loading.stop()
 
         state["report"] = report
-        result.set_results(report_to_results(report))
+        state["plan"] = plan
+        result.set_path(state["scan_path"])
+        result.set_results(report_to_results(report, plan))
         stack.setCurrentWidget(result)
         print("[DEBUG] 분석 완료 → 결과 페이지로 전환")
 
@@ -119,8 +127,10 @@ def main():
     def go_to_loading():
         stack.setCurrentWidget(loading)
         loading.update_progress(0)
-        loading.start()
         scan_path = home.get_scan_path()
+        state["scan_path"] = scan_path
+        loading.set_path(scan_path)
+        loading.start()
         print(f"[DEBUG] 스캔 요청됨! 대상: {scan_path}")
 
         thread, worker = start_analysis(scan_path)
@@ -143,7 +153,7 @@ def main():
         if report is None:
             return
         if category == CATEGORY_DELETE_TARGET:
-            delete_detail.set_files(report_to_delete_files(report))
+            delete_detail.set_files(report_to_delete_files(report, state["plan"]))
             delete_detail.update_responsive_size(window.width())
             stack.setCurrentWidget(delete_detail)
         elif category == CATEGORY_DUPLICATE:
@@ -151,8 +161,33 @@ def main():
             duplicate_detail.update_responsive_size(window.width())
             stack.setCurrentWidget(duplicate_detail)
 
+    def on_delete_target_delete_requested(selected_paths):
+        plan = state["plan"]
+        if plan is None or not selected_paths:
+            return
+        result_ = delete_plan(plan, deletion_manager, set(selected_paths))
+        print(
+            f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
+            f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
+        )
+        go_to_loading()
+
+    def on_duplicate_delete_requested(selected_paths):
+        if not selected_paths:
+            return
+        result_ = deletion_manager.delete([Path(p) for p in selected_paths])
+        print(
+            f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
+            f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
+        )
+        go_to_loading()
+
     home.scan_requested.connect(go_to_loading)
     result.card_clicked.connect(go_to_detail)
+    delete_detail.delete_requested.connect(on_delete_target_delete_requested)
+    duplicate_detail.delete_requested.connect(on_duplicate_delete_requested)
+    delete_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
+    duplicate_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
 
     is_dark = load_dark_mode()
 

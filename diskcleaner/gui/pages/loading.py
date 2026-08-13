@@ -1,9 +1,10 @@
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.loading import icons
 from diskcleaner.gui.components.loading.progress_bar import LoadingProgressBar
-from diskcleaner.gui.typo import body_md, headline
+from diskcleaner.gui.typo import body_md, body_mini, headline
 
 LOADING_MESSAGES = [
     "AI가 파일을 탐색 중이에요",
@@ -28,6 +29,7 @@ class LoadingPage(QWidget):
         self._is_dark = False
         self._icon_toggle = False
         self._message_index = 0
+        self._scan_path = ""
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -58,6 +60,14 @@ class LoadingPage(QWidget):
         self.message_label.setGraphicsEffect(self._message_opacity)
         self._message_opacity.setOpacity(1.0)
 
+        layout.addSpacing(8)
+
+        self.path_label = QLabel()
+        self.path_label.setObjectName("loadingPathLabel")
+        self.path_label.setFont(body_mini())
+        self.path_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.path_label)
+
         layout.addSpacing(16)
 
         self.progress_bar = LoadingProgressBar()
@@ -70,6 +80,23 @@ class LoadingPage(QWidget):
         self._message_timer.timeout.connect(self._next_message)
 
         self._apply_icon()
+
+    def set_path(self, path: str):
+        self._scan_path = path
+        self._refresh_path_text()
+
+    def _refresh_path_text(self):
+        if not self._scan_path:
+            self.path_label.setText("")
+            return
+        metrics = QFontMetrics(self.path_label.font())
+        available_width = max(self.width() - 40, 0)
+        elided = metrics.elidedText(f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width)
+        self.path_label.setText(elided)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._refresh_path_text()
 
     def start(self):
         self._icon_timer.start(ICON_SWAP_INTERVAL_MS)
@@ -123,3 +150,5 @@ class LoadingPage(QWidget):
     def refresh_fonts(self):
         self.title_label.setFont(headline())
         self.message_label.setFont(body_md())
+        self.path_label.setFont(body_mini())
+        self._refresh_path_text()
