@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from diskcleaner.core.deletion_pipeline import DeletionPlan
 from diskcleaner.core.smart_cleanup import CleanupReport
 
