@@ -10,6 +10,8 @@ BUTTON_TEXT_SELECTED = "선택 삭제"
 
 
 class DuplicatePage(QWidget):
+    """중복 파일 상세 화면 - 그룹별로 원본 제외 사본을 기본 선택해 보여줌."""
+
     delete_requested = Signal(list)
     back_requested = Signal()
 

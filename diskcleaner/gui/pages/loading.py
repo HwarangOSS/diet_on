@@ -20,6 +20,8 @@ FADE_DURATION_MS = 350
 
 
 class LoadingPage(QWidget):
+    """분석 진행 중 화면 - 진행률 표시와 안내 메시지 로테이션."""
+
     analyze_finished = Signal()
 
     def __init__(self, parent=None):

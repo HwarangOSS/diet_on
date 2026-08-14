@@ -14,6 +14,8 @@ DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
 
 
 class HomePage(QWidget):
+    """전원 버튼으로 스캔 시작, 라벨 클릭으로 스캔 대상 폴더 선택."""
+
     scan_requested = Signal()
 
     def __init__(self, parent=None):
@@ -59,6 +61,7 @@ class HomePage(QWidget):
         self.power_button.clicked_scan.connect(self.scan_requested.emit)
 
     def _choose_scan_path(self):
+        """폴더 선택 다이얼로그 띄우고, 고르면 scan_path/라벨 갱신."""
         chosen = QFileDialog.getExistingDirectory(self, "검사할 폴더 선택", self.scan_path)
         if chosen:
             self.scan_path = chosen

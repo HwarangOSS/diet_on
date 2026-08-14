@@ -27,6 +27,8 @@ CARD_TEXTS = {
 
 
 class ResultPage(QWidget):
+    """분석 결과 요약 화면 - 삭제 대상/중복 카드, 클릭 시 상세 페이지로 이동."""
+
     card_clicked = Signal(str)
 
     def __init__(self, parent=None):

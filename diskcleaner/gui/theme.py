@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Palette:
+    """라이트/다크 테마 하나의 색상 세트."""
+
     bg: str  # 배경
     surface: str  # 모달
     border: str  # 기본 구분선

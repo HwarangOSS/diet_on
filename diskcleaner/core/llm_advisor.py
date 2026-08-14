@@ -161,10 +161,12 @@ def validate_batch_response(
 
 
 def _build_batches(files: List[FileInfo]) -> List[List[FileInfo]]:
+    """files를 BATCH_SIZE 단위로 쪼갬."""
     return [files[i : i + BATCH_SIZE] for i in range(0, len(files), BATCH_SIZE)]
 
 
 def _build_request(batch_id: str, batch: List[FileInfo]) -> Dict[str, Any]:
+    """배치를 LLM 요청 형식(file_id/name/size/mtime, 절대경로 제외)으로 변환."""
     files = []
     for i, file in enumerate(batch):
         entry: Dict[str, Any] = {
@@ -179,6 +181,7 @@ def _build_request(batch_id: str, batch: List[FileInfo]) -> Dict[str, Any]:
 
 
 def _call_llm(client: "anthropic.Anthropic", request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """배치 하나를 Claude에 보내고 JSON 응답을 파싱 (실패 시 None, 검증은 호출 측 책임)."""
     import anthropic
 
     try:
@@ -246,6 +249,7 @@ def get_recommendations(files: List[FileInfo]) -> Dict[str, Dict[str, Any]]:
 
 # 임시 테스트 코드
 def test_connection() -> str:
+    """Claude API 연결 확인용 수동 스모크 테스트."""
     import anthropic
 
     with anthropic.Anthropic() as client:

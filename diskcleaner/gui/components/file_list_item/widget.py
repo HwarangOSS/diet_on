@@ -17,6 +17,8 @@ def _with_alpha(hex_color: str, alpha: int) -> QColor:
 
 
 class FileListItem(QWidget):
+    """삭제 후보 파일 한 개 행 - 이름/경로/용량/사유 표시와 클릭 선택 토글."""
+
     toggled = Signal(bool)
 
     def __init__(self, parent=None):

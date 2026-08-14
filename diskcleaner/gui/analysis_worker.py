@@ -10,6 +10,8 @@ from diskcleaner.core.smart_cleanup import CleanupReport, SmartCleanupEngine
 
 
 class AnalysisWorker(QObject):
+    """분석+삭제 계획 생성을 백그라운드 스레드에서 돌리고 결과를 시그널로 전달."""
+
     finished = Signal(CleanupReport, DeletionPlan)
     error = Signal(str)
 
@@ -18,6 +20,7 @@ class AnalysisWorker(QObject):
         self.target_path = target_path
 
     def run(self):
+        """스캔+분석 후 DeletionPlan까지 만들어 finished로 emit (실패 시 error emit)."""
         print(f"[SCAN] 분석 시작: {self.target_path}")
         start = time.monotonic()
         try:
@@ -39,6 +42,7 @@ class AnalysisWorker(QObject):
 
 
 def start_analysis(target_path: str) -> tuple[QThread, AnalysisWorker]:
+    """AnalysisWorker를 QThread에 붙여서 반환 (호출 측이 start()로 실행)."""
     thread = QThread()
     worker = AnalysisWorker(target_path)
     worker.moveToThread(thread)
