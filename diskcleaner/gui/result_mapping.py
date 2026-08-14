@@ -8,6 +8,10 @@ from diskcleaner.core.smart_cleanup import CleanupReport
 # 지워도 되는 파일이라는 의미로 이름을 바꿈.
 SAFE_CATEGORY_LABEL = "즉시 삭제 가능"
 
+# review_queue 파일(AI가 삭제를 승인하지 않아 사람이 직접 판단해야 하는 파일)은
+# SAFE_CATEGORY_LABEL과 절대 섞이면 안 됨 - 기본 선택/일괄 삭제 대상에서 빠져야 함.
+REVIEW_CATEGORY_LABEL = "검토 필요"
+
 # FileClassifier의 타입 카테고리가 중국어로 돼있어서(diskcleaner/core/classifier.py
 # type_categories) 그대로 해시태그에 노출하면 안 됨 - 우선 자주 나오는 것만
 # 한국어로 옮겨두고, 매핑에 없는 카테고리는 "기타 파일"로 뭉뚱그림.
@@ -49,13 +53,20 @@ def report_to_delete_files(report: CleanupReport, plan: DeletionPlan | None = No
     type_lookup = _build_type_lookup(report)
 
     if plan is not None:
-        files = plan.auto_delete + plan.review_queue
         llm_lookup = {
             path: result for path, result in plan.llm_results.items() if isinstance(result, dict)
         }
+        # review_queue는 AI가 삭제를 승인하지 않은 파일이라 category를 llm 결과에
+        # 맡기지 않고 항상 REVIEW_CATEGORY_LABEL로 고정 (SAFE_CATEGORY_LABEL과 섞여
+        # 기본 선택/일괄 삭제되는 걸 막기 위함).
+        categorized = [
+            (f, llm_lookup.get(f.path, {}).get("category", SAFE_CATEGORY_LABEL))
+            for f in plan.auto_delete
+        ] + [(f, REVIEW_CATEGORY_LABEL) for f in plan.review_queue]
     else:
-        files = report.by_risk.get("safe", []) + report.by_risk.get("confirm_needed", [])
         llm_lookup = {}
+        files = report.by_risk.get("safe", []) + report.by_risk.get("confirm_needed", [])
+        categorized = [(f, SAFE_CATEGORY_LABEL) for f in files]
 
     return [
         {
@@ -64,9 +75,9 @@ def report_to_delete_files(report: CleanupReport, plan: DeletionPlan | None = No
             "size_bytes": f.size,
             "hashtags": [type_lookup[f.path]] if f.path in type_lookup else [],
             "reason": llm_lookup.get(f.path, {}).get("reason"),
-            "category": llm_lookup.get(f.path, {}).get("category", SAFE_CATEGORY_LABEL),
+            "category": category,
         }
-        for f in files
+        for f, category in categorized
     ]
 
 

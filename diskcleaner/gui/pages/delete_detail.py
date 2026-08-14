@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QScrollArea, QVBox
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
-from diskcleaner.gui.result_mapping import SAFE_CATEGORY_LABEL
+from diskcleaner.gui.result_mapping import REVIEW_CATEGORY_LABEL, SAFE_CATEGORY_LABEL
 from diskcleaner.gui.typo import body_mini, headline_small
 
 BUTTON_TEXT_DEFAULT = "전체 삭제"
@@ -14,6 +14,8 @@ CHEVRON_COLLAPSED = "▶"
 
 
 class DeletePage(QWidget):
+    """삭제 후보 상세 화면 - 카테고리별로 묶어서 보여주고 그룹/개별 선택 지원."""
+
     delete_requested = Signal(list)
     back_requested = Signal()
 
@@ -97,6 +99,8 @@ class DeletePage(QWidget):
                 item.set_file(
                     f["name"], f["path"], f["size_bytes"], f.get("hashtags"), f.get("reason")
                 )
+                if category == REVIEW_CATEGORY_LABEL:
+                    item.set_selected(False, emit=False)
                 item.set_dark(self._is_dark)
                 item.toggled.connect(self._on_item_toggled)
                 self.list_layout.insertWidget(insert_at, item)

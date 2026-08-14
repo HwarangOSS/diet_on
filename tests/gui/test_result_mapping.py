@@ -1,6 +1,11 @@
 # 테스트코드
 from diskcleaner.core.deletion_pipeline import DeletionPlan
-from diskcleaner.gui.result_mapping import report_to_delete_files, report_to_results
+from diskcleaner.gui.result_mapping import (
+    REVIEW_CATEGORY_LABEL,
+    SAFE_CATEGORY_LABEL,
+    report_to_delete_files,
+    report_to_results,
+)
 from tests.gui.factories import make_duplicate_group, make_file, make_report
 
 
@@ -79,3 +84,18 @@ def test_delete_files_includes_llm_reason_from_plan():
     files = report_to_delete_files(report, plan)
 
     assert files[0]["reason"] == "오래된 임시 파일"
+
+
+def test_review_queue_files_get_review_category_not_safe():
+    """review_queue는 AI가 삭제를 승인하지 않은 파일이라 SAFE_CATEGORY_LABEL과
+    섞이면 안 됨 - llm_results에 category가 없어도 REVIEW_CATEGORY_LABEL로 고정돼야 함."""
+    auto_delete = [make_file("/tmp/a.tmp", 100)]
+    review_queue = [make_file("/tmp/ambiguous.docx", 5000)]
+    report = make_report(safe=auto_delete, confirm=review_queue)
+    plan = DeletionPlan(auto_delete=auto_delete, review_queue=review_queue, excluded=[])
+
+    files = report_to_delete_files(report, plan)
+
+    by_path = {f["path"]: f for f in files}
+    assert by_path["/tmp/a.tmp"]["category"] == SAFE_CATEGORY_LABEL
+    assert by_path["/tmp/ambiguous.docx"]["category"] == REVIEW_CATEGORY_LABEL
