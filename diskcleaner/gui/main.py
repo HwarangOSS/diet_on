@@ -179,6 +179,12 @@ def main():
         plan = state["plan"]
         if plan is None or not selected_paths:
             return
+        # 삭제(디스크 I/O)는 동기 호출이라 완료 전까지 화면이 멈춘 채 마지막으로
+        # 그려진 프레임(체크 해제된 남은 항목이 보이는 상세 페이지)이 그대로 남는다.
+        # 무거운 작업을 시작하기 전에 화면을 먼저 complete로 넘겨둬서 그 프레임이
+        # 노출되지 않게 한다.
+        complete.set_result(0, 0)
+        stack.setCurrentWidget(complete)
         result_ = delete_plan(plan, deletion_manager, set(selected_paths))
         print(
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
@@ -190,6 +196,8 @@ def main():
     def on_duplicate_delete_requested(selected_paths):
         if not selected_paths:
             return
+        complete.set_result(0, 0)
+        stack.setCurrentWidget(complete)
         result_ = deletion_manager.delete([Path(p) for p in selected_paths])
         print(
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
