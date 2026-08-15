@@ -5,6 +5,7 @@ from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
 from diskcleaner.gui.components.side_action_button import SideActionButton
 from diskcleaner.gui.components.tri_state_checkbox import TriStateCheckBox
+from diskcleaner.gui.result_mapping import REVIEW_CATEGORY_LABEL
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import FontFamily, get_font
 
@@ -105,7 +106,7 @@ class DeletePage(QWidget):
         for f in files:
             item = FileListItem()
             item.set_file(f["name"], f["path"], f["size_bytes"], f.get("reason"))
-            item.set_selected(True, emit=False)
+            item.set_selected(f.get("category") != REVIEW_CATEGORY_LABEL, emit=False)
             item.set_dark(self._is_dark)
             item.toggled.connect(self._on_item_toggled)
             self.list_layout.insertWidget(insert_at, item)

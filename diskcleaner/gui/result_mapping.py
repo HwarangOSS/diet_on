@@ -17,16 +17,18 @@ def report_to_delete_files(report: CleanupReport, plan: DeletionPlan | None = No
         path: result for path, result in plan.llm_results.items() if isinstance(result, dict)
     }
 
-    return [
-        {
+    def _to_file_dict(f, category: str) -> dict:
+        return {
             "path": f.path,
             "name": f.name,
             "size_bytes": f.size,
             "reason": llm_lookup.get(f.path, {}).get("reason"),
-            "category": REVIEW_CATEGORY_LABEL,
+            "category": category,
         }
-        for f in plan.review_queue
-    ]
+
+    # review_queue(AI가 삭제를 권하지 않은 파일)는 상세 삭제 목록에 노출하지 않는다 -
+    # 정말 삭제 대상인 auto_delete만 사용자에게 보여준다.
+    return [_to_file_dict(f, SAFE_CATEGORY_LABEL) for f in plan.auto_delete]
 
 
 def report_to_duplicate_groups(report: CleanupReport) -> list:
@@ -72,7 +74,7 @@ def remove_deleted_paths(
 
 def report_to_results(report: CleanupReport, plan: DeletionPlan | None = None) -> dict:
     if plan is not None:
-        delete_target_files = plan.review_queue
+        delete_target_files = plan.auto_delete
     else:
         safe_files = report.by_risk.get("safe", [])
         confirm_files = report.by_risk.get("confirm_needed", [])
