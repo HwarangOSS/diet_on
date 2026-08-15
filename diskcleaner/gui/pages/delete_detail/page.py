@@ -1,11 +1,5 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
@@ -36,7 +30,6 @@ def _label_font(scale: float):
 
 
 class DeletePage(QWidget):
-
     delete_requested = Signal(list)
     back_requested = Signal()
 

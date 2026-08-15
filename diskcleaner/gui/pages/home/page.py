@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton, QSizePolicy, QVB
 
 from diskcleaner.gui.components.power_button import PowerButton
 from diskcleaner.gui.theme import palette_for
-from diskcleaner.gui.typo import body_md, body_mini, headline, path_quote, rem
+from diskcleaner.gui.typo import body_md, headline, path_quote, rem
 
 from . import styles
 
@@ -17,7 +17,6 @@ SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
 
 
 class HomePage(QWidget):
-
     scan_requested = Signal()
 
     def __init__(self, parent=None):
@@ -96,7 +95,8 @@ class HomePage(QWidget):
         padding_h = rem(styles.BUTTON_PADDING_H_REM)
         button_height = QFontMetrics(body_md()).height() + padding_v * 2
         radius = button_height / 2
-        self.change_path_button.setStyleSheet(f"""
+        self.change_path_button.setStyleSheet(
+            f"""
             QPushButton#changePathButton {{
                 background-color: {p.primary};
                 color: #FFFFFF;
@@ -110,7 +110,8 @@ class HomePage(QWidget):
             QPushButton#changePathButton:pressed {{
                 background-color: {p.primary_hover};
             }}
-            """)
+            """
+        )
 
     def _apply_responsive_size(self):
         self._power_button_gap.changeSize(
@@ -119,9 +120,7 @@ class HomePage(QWidget):
         self._click_gap.changeSize(
             0, rem(styles.CLICK_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
         )
-        self._sub_gap.changeSize(
-            0, rem(styles.SUB_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
-        )
+        self._sub_gap.changeSize(0, rem(styles.SUB_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._button_top_gap.changeSize(
             0, rem(styles.BUTTON_TOP_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
         )

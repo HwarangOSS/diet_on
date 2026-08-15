@@ -8,7 +8,6 @@ from . import styles
 
 
 class TriStateCheckBox(QWidget):
-
     clicked = Signal()
 
     def __init__(self, text: str = "", parent=None):
@@ -84,7 +83,9 @@ class TriStateCheckBox(QWidget):
         if self._text:
             painter.setPen(QColor(self._color))
             painter.setFont(self.font())
-            text_rect = QRectF(box_size + self._gap, 0, self.width() - box_size - self._gap, self.height())
+            text_rect = QRectF(
+                box_size + self._gap, 0, self.width() - box_size - self._gap, self.height()
+            )
             painter.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, self._text)
 
         painter.end()

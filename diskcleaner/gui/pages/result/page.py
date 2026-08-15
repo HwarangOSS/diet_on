@@ -123,9 +123,7 @@ class ResultPage(QWidget):
         metrics = QFontMetrics(self.path_label.font())
         margin = round(styles.REF_MARGIN * _design_scale(self.width()))
         available_width = max(self.width() - margin * 2, 0)
-        elided = metrics.elidedText(
-            f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width
-        )
+        elided = metrics.elidedText(f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width)
         self.path_label.setText(elided)
 
     def set_results(self, results: dict):
