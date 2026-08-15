@@ -3,7 +3,7 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 from diskcleaner.gui.theme import LIGHT
-from diskcleaner.gui.typo import BASE_WINDOW_WIDTH, headline_small
+from diskcleaner.gui.typo import headline_small, rem, set_global_scale
 
 from . import styles
 
@@ -28,7 +28,7 @@ class BottomActionButton(QWidget):
         self._scale_anim.setDuration(styles.ANIM_DURATION_MS)
         self._scale_anim.setEasingCurve(QEasingCurve.OutCubic)
 
-        self.setFixedSize(styles.BASE_WIDTH, styles.BASE_HEIGHT)
+        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
 
     def _get_scale(self):
         return self._scale
@@ -49,9 +49,8 @@ class BottomActionButton(QWidget):
         self.update()
 
     def update_responsive_size(self, container_width: int):
-        scale = container_width / BASE_WINDOW_WIDTH
-        scale = max(styles.SCALE_MIN, min(scale, styles.SCALE_MAX))
-        self.setFixedSize(container_width, round(styles.BASE_HEIGHT * scale))
+        set_global_scale(container_width)
+        self.setFixedSize(container_width, rem(styles.HEIGHT_REM))
 
     # 이벤트
     def enterEvent(self, event):
@@ -125,7 +124,7 @@ class BottomActionButton(QWidget):
         dome.addEllipse(QRectF(0, 0, w, h * 2))
         painter.fillPath(dome, self._background_color())
         layers = 6
-        max_width = styles.GLOW_SPREAD * 2
+        max_width = rem(styles.GLOW_SPREAD_REM) * 2
         for i in range(layers):
             t = i / (layers - 1)
             pen_width = max(1, round(max_width * (1 - t)))

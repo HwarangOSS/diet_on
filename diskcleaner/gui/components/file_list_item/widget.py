@@ -5,7 +5,7 @@ from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.theme import DARK, LIGHT
-from diskcleaner.gui.typo import BASE_WINDOW_WIDTH, body_md, body_mini, hashtag, naming
+from diskcleaner.gui.typo import body_md, body_mini, hashtag, naming, rem, set_global_scale
 
 from . import styles
 
@@ -29,21 +29,17 @@ class FileListItem(QWidget):
 
         self._is_dark = False
         self._is_selected = True
-        self._scale = 1.0
         self._press_inside = False
         self._reason = ""
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(
-            styles.BASE_PADDING_H,
-            styles.BASE_PADDING_V,
-            styles.BASE_PADDING_H,
-            styles.BASE_PADDING_V,
-        )
-        layout.setSpacing(styles.BASE_ROW_GAP)
+        padding_h = rem(styles.PADDING_H_REM)
+        padding_v = rem(styles.PADDING_V_REM)
+        layout.setContentsMargins(padding_h, padding_v, padding_h, padding_v)
+        layout.setSpacing(rem(styles.ROW_GAP_REM))
 
-        top_row = QHBoxLayout()
-        top_row.setSpacing(8)
+        self._top_row = top_row = QHBoxLayout()
+        top_row.setSpacing(rem(styles.TOP_ROW_GAP_REM))
 
         self.name_label = QLabel()
         self.name_label.setObjectName("fileItemName")
@@ -81,7 +77,7 @@ class FileListItem(QWidget):
 
         layout.addLayout(bottom_row)
 
-        self.setFixedSize(styles.BASE_WIDTH, styles.BASE_HEIGHT)
+        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
         self._refresh_style()
 
     # API
@@ -119,7 +115,7 @@ class FileListItem(QWidget):
         if not self._reason:
             return
         metrics = QFontMetrics(self.reason_label.font())
-        available_width = self.width() - 2 * round(styles.BASE_PADDING_H * self._scale)
+        available_width = self.width() - 2 * rem(styles.PADDING_H_REM)
         elided = metrics.elidedText(
             f"AI 사유: {self._reason}", Qt.ElideRight, max(available_width, 0)
         )
@@ -127,6 +123,14 @@ class FileListItem(QWidget):
 
     def set_hashtag_visible(self, visible: bool):
         self.hashtag_label.setVisible(visible)
+
+    def refresh_fonts(self):
+        self.name_label.setFont(naming())
+        self.path_label.setFont(body_md())
+        self.size_label.setFont(body_mini())
+        self.hashtag_label.setFont(hashtag())
+        self.reason_label.setFont(body_mini())
+        self._refresh_reason_text()
 
     def is_selected(self) -> bool:
         return self._is_selected
@@ -146,16 +150,15 @@ class FileListItem(QWidget):
         self.update()
 
     def update_responsive_size(self, container_width: int):
-        scale = container_width / BASE_WINDOW_WIDTH
-        scale = max(styles.SCALE_MIN, min(scale, styles.SCALE_MAX))
-        self._scale = scale
+        set_global_scale(container_width)
 
-        self.setFixedSize(round(styles.BASE_WIDTH * scale), round(styles.BASE_HEIGHT * scale))
+        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
 
-        h_margin = round(styles.BASE_PADDING_H * scale)
-        v_margin = round(styles.BASE_PADDING_V * scale)
+        h_margin = rem(styles.PADDING_H_REM)
+        v_margin = rem(styles.PADDING_V_REM)
         self.layout().setContentsMargins(h_margin, v_margin, h_margin, v_margin)
-        self.layout().setSpacing(round(styles.BASE_ROW_GAP * scale))
+        self.layout().setSpacing(rem(styles.ROW_GAP_REM))
+        self._top_row.setSpacing(rem(styles.TOP_ROW_GAP_REM))
         self._refresh_reason_text()
         self.update()
 
@@ -202,7 +205,7 @@ class FileListItem(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w, h = self.width(), self.height()
-        radius = styles.CORNER_RADIUS * self._scale
+        radius = rem(styles.CORNER_RADIUS_REM)
 
         path = QPainterPath()
         path.addRoundedRect(QRectF(0, 0, w, h), radius, radius)
@@ -212,7 +215,7 @@ class FileListItem(QWidget):
 
         glow = QColor(styles.SELECT_SHADOW_COLOR)
         layers = 5
-        max_width = styles.GLOW_SPREAD * 2 * self._scale
+        max_width = rem(styles.GLOW_SPREAD_REM) * 2
         for i in range(layers):
             t = i / (layers - 1)
             pen_width = max(1, round(max_width * (1 - t)))

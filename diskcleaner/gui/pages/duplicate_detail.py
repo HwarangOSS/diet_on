@@ -3,10 +3,15 @@ from PySide6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.duplicate_group import DuplicateGroupBox
-from diskcleaner.gui.typo import body_mini, headline_small
+from diskcleaner.gui.typo import body_mini, headline_small, rem, set_global_scale
 
 BUTTON_TEXT_DEFAULT = "그룹당 1개 남기고 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
+
+# rem 단위(1rem=16px)
+PAGE_MARGIN_REM = 20 / 16
+PAGE_GAP_REM = 16 / 16
+LIST_GAP_REM = 16 / 16
 
 
 class DuplicatePage(QWidget):
@@ -23,9 +28,7 @@ class DuplicatePage(QWidget):
         self._group_files: list[list[dict]] = []
         self._is_dark = False
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        self._layout = layout = QVBoxLayout(self)
 
         self.back_label = QLabel("‹ 뒤로")
         self.back_label.setObjectName("detailBackLabel")
@@ -50,7 +53,6 @@ class DuplicatePage(QWidget):
         self.list_container.setObjectName("duplicateListContainer")
         self.list_layout = QVBoxLayout(self.list_container)
         self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(16)
         self.list_layout.addStretch()
 
         self.scroll_area.setWidget(self.list_container)
@@ -60,6 +62,8 @@ class DuplicatePage(QWidget):
         self.action_button.set_text(BUTTON_TEXT_DEFAULT)
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
+
+        self._apply_responsive_size()
 
     # API
     def set_groups(self, groups: list[dict]):
@@ -86,7 +90,16 @@ class DuplicatePage(QWidget):
             group_box.set_dark(dark)
         self.action_button.set_dark(dark)
 
+    def _apply_responsive_size(self):
+        margin = rem(PAGE_MARGIN_REM)
+        self._layout.setContentsMargins(margin, margin, margin, margin)
+        self._layout.setSpacing(rem(PAGE_GAP_REM))
+        self.list_layout.setSpacing(rem(LIST_GAP_REM))
+
     def update_responsive_size(self, container_width: int):
+        set_global_scale(container_width)
+        self._apply_responsive_size()
+
         for group_box in self._groups:
             group_box.update_responsive_size(container_width)
         self.action_button.update_responsive_size(container_width)
@@ -94,6 +107,8 @@ class DuplicatePage(QWidget):
     def refresh_fonts(self):
         self.back_label.setFont(body_mini())
         self.title_label.setFont(headline_small())
+        for group_box in self._groups:
+            group_box.refresh_fonts()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

@@ -50,13 +50,13 @@ def _render_pixmap(
     return pixmap
 
 
-def make_more_icon(color: str = LIGHT.text_primary) -> QPixmap:
-    return _render_pixmap(SVG_MORE, color)
+def make_more_icon(color: str = LIGHT.text_primary, size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap(SVG_MORE, color, size=size)
 
 
-def make_minimize_icon(color: str = LIGHT.text_primary) -> QPixmap:
-    return _render_pixmap(SVG_MINIMIZE, color)
+def make_minimize_icon(color: str = LIGHT.text_primary, size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap(SVG_MINIMIZE, color, size=size)
 
 
-def make_close_icon(color: str = LIGHT.text_primary) -> QPixmap:
-    return _render_pixmap(SVG_CLOSE, color)
+def make_close_icon(color: str = LIGHT.text_primary, size: int = ICON_SIZE) -> QPixmap:
+    return _render_pixmap(SVG_CLOSE, color, size=size)

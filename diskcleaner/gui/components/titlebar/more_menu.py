@@ -3,20 +3,27 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.theme import palette_for
-from diskcleaner.gui.typo import body_md, get_global_scale, ver
+from diskcleaner.gui.typo import body_md, rem, ver
 
-BASE_MENU_WIDTH = 92
-BASE_ITEM_HEIGHT = 34
-BASE_CORNER_RADIUS = 8
-BASE_TRIANGLE_SIZE = 8
-BASE_TRIANGLE_OFFSET = 18
-BASE_VERSION_SPACING = 10
+# 아래 상수는 전부 rem 단위(1rem=16px)다. 실제 픽셀은 rem()이 현재 전역 스케일을
+# 반영해서 계산하므로, 창 크기가 바뀌면 이 팝업도 같이 커지거나 작아진다.
+MENU_WIDTH_REM = 5.75
+ITEM_HEIGHT_REM = 2.125
+SEPARATOR_HEIGHT_REM = 0.0625
+GAP_BEFORE_VERSION_REM = 0.375
+BOTTOM_PADDING_REM = 0.5
+CORNER_RADIUS_REM = 0.5
+TRIANGLE_SIZE_REM = 0.5
 
-SCALE_MIN = 0.6
-SCALE_MAX = 1.5
-
-MENU_WIDTH = BASE_MENU_WIDTH
-MENU_HEIGHT = BASE_ITEM_HEIGHT * 3 + BASE_VERSION_SPACING + 20
+SHADOW_MARGIN_REM = 0.5
+SHADOW_Y_OFFSET_REM = 0.125
+# (얼마나 바깥으로 번지는지[rem], 알파값) 쌍을 겹쳐 그려서 흐릿한 그림자를 흉내낸다.
+SHADOW_LAYERS_REM = [
+    (0.0625, 20),
+    (0.125, 14),
+    (0.25, 9),
+    (0.375, 5),
+]
 
 
 def _with_alpha(hex_color: str, alpha: int) -> QColor:
@@ -31,95 +38,117 @@ class MoreMenu(QWidget):
     license_requested = Signal()
 
     def __init__(self, parent=None):
-        super().__init__(parent, Qt.Popup | Qt.FramelessWindowHint)
+        super().__init__(parent, Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         self._is_dark = False
         self._bg_color = "#FFFFFF"
-        self._scale = 1.0
-        self._menu_width = BASE_MENU_WIDTH
-        self._triangle_size = BASE_TRIANGLE_SIZE
-        self._corner_radius = BASE_CORNER_RADIUS
+        self._separators = []
 
-        self._outer_layout = QVBoxLayout(self)
-        self._outer_layout.setContentsMargins(0, BASE_TRIANGLE_SIZE, 0, 0)
-        self._outer_layout.setSpacing(0)
+        self._layout = QVBoxLayout(self)
+        self._layout.setSpacing(0)
 
         self.theme_label = self._make_item("다크 모드")
         self.theme_label.mousePressEvent = lambda e: self._on_theme_click()
-        self._outer_layout.addWidget(self.theme_label)
-        self.sep1 = self._make_separator()
-        self._outer_layout.addWidget(self.sep1)
+        self._layout.addWidget(self.theme_label)
+        self._layout.addWidget(self._make_separator())
 
         self.help_label = self._make_item("도움말")
         self.help_label.mousePressEvent = lambda e: self._on_help_click()
-        self._outer_layout.addWidget(self.help_label)
-        self.sep2 = self._make_separator()
-        self._outer_layout.addWidget(self.sep2)
+        self._layout.addWidget(self.help_label)
+        self._layout.addWidget(self._make_separator())
 
         self.license_label = self._make_item("라이센스")
         self.license_label.mousePressEvent = lambda e: self._on_license_click()
-        self._outer_layout.addWidget(self.license_label)
+        self._layout.addWidget(self.license_label)
 
-        self._outer_layout.addStretch()
+        self._gap_before_version = QWidget()
+        self._layout.addWidget(self._gap_before_version)
 
         self.version_label = QLabel("버전 정보 : 1.0.0 ver")
         self.version_label.setObjectName("moreMenuVersion")
         self.version_label.setFont(ver())
         self.version_label.setAlignment(Qt.AlignCenter)
-        self._outer_layout.addWidget(self.version_label)
-        self._version_spacer_size = BASE_VERSION_SPACING
-        self._outer_layout.addSpacing(self._version_spacer_size)
+        self._layout.addWidget(self.version_label)
 
-        self._items = [self.theme_label, self.help_label, self.license_label]
+        self._bottom_padding = QWidget()
+        self._layout.addWidget(self._bottom_padding)
 
         self.apply_theme(dark=False)
         self._apply_responsive_size()
+
+    def _apply_responsive_size(self):
+        self._menu_width = rem(MENU_WIDTH_REM)
+        self._corner_radius = rem(CORNER_RADIUS_REM)
+        self._triangle_size = rem(TRIANGLE_SIZE_REM)
+        self._shadow_margin = rem(SHADOW_MARGIN_REM)
+        self._shadow_y_offset = rem(SHADOW_Y_OFFSET_REM)
+        self._shadow_layers = [(rem(grow), alpha) for grow, alpha in SHADOW_LAYERS_REM]
+
+        item_height = rem(ITEM_HEIGHT_REM)
+        for label in (self.theme_label, self.help_label, self.license_label):
+            label.setFixedHeight(item_height)
+
+        separator_height = rem(SEPARATOR_HEIGHT_REM)
+        for separator in self._separators:
+            separator.setFixedHeight(separator_height)
+
+        self._gap_before_version.setFixedHeight(rem(GAP_BEFORE_VERSION_REM))
+        self._bottom_padding.setFixedHeight(rem(BOTTOM_PADDING_REM))
+
+        self._layout.setContentsMargins(
+            self._shadow_margin,
+            self._shadow_margin + self._triangle_size,
+            self._shadow_margin,
+            self._shadow_margin,
+        )
+
+        menu_height = (
+            item_height * 3
+            + separator_height * 2
+            + self._gap_before_version.height()
+            + self.version_label.sizeHint().height()
+            + self._bottom_padding.height()
+        )
+        self.setFixedSize(
+            self._menu_width + self._shadow_margin * 2,
+            menu_height + self._triangle_size + self._shadow_margin * 2,
+        )
+        self.update()
+
+    def _build_path(self, grow: float = 0, dy: float = 0) -> QPainterPath:
+        path = QPainterPath()
+        body_height = self.height() - self._triangle_size - self._shadow_margin * 2
+        body_rect = QRectF(
+            self._shadow_margin - grow,
+            self._shadow_margin + self._triangle_size - grow + dy,
+            self._menu_width + grow * 2,
+            body_height + grow * 2,
+        )
+        path.addRoundedRect(body_rect, self._corner_radius + grow, self._corner_radius + grow)
+
+        tip_x = self._shadow_margin + self._menu_width / 2
+        triangle = QPainterPath()
+        triangle.moveTo(tip_x - self._triangle_size - grow, self._shadow_margin + self._triangle_size + dy)
+        triangle.lineTo(tip_x, self._shadow_margin - grow + dy)
+        triangle.lineTo(tip_x + self._triangle_size + grow, self._shadow_margin + self._triangle_size + dy)
+        triangle.closeSubpath()
+
+        path.addPath(triangle)
+        return path
 
     def _make_item(self, text: str) -> QLabel:
         label = QLabel(text)
         label.setObjectName("moreMenuItem")
         label.setFont(body_md())
         label.setAlignment(Qt.AlignCenter)
-        label.setFixedHeight(BASE_ITEM_HEIGHT)
         label.setCursor(Qt.PointingHandCursor)
         return label
-
-    def refresh_fonts(self):
-        """전역 폰트 스케일이 바뀌면 팝업 자체 크기도 같이 맞춰서, 커진 글자가
-        고정폭 92px 밖으로 넘치지 않게 함."""
-        self.theme_label.setFont(body_md())
-        self.help_label.setFont(body_md())
-        self.license_label.setFont(body_md())
-        self.version_label.setFont(ver())
-        self._apply_responsive_size()
-
-    def _apply_responsive_size(self):
-        scale = max(SCALE_MIN, min(get_global_scale(), SCALE_MAX))
-        self._scale = scale
-
-        self._menu_width = round(BASE_MENU_WIDTH * scale)
-        item_height = round(BASE_ITEM_HEIGHT * scale)
-        self._triangle_size = max(4, round(BASE_TRIANGLE_SIZE * scale))
-        self._corner_radius = round(BASE_CORNER_RADIUS * scale)
-        version_spacing = round(BASE_VERSION_SPACING * scale)
-
-        for label in self._items:
-            label.setFixedHeight(item_height)
-
-        self._outer_layout.setContentsMargins(0, self._triangle_size, 0, 0)
-        # 마지막 addSpacing으로 넣은 항목을 다시 만들 수는 없어서, 대신 버전
-        # 라벨에 하단 여백을 준다.
-        self.version_label.setContentsMargins(0, 0, 0, version_spacing)
-
-        menu_height = item_height * 3 + self.version_label.sizeHint().height() + version_spacing
-        self.setFixedSize(self._menu_width, menu_height + self._triangle_size)
-        self.update()
 
     def _make_separator(self) -> QFrame:
         line = QFrame()
         line.setObjectName("moreMenuSeparator")
-        line.setFixedHeight(1)
+        self._separators.append(line)
         return line
 
     def _on_theme_click(self):
@@ -141,10 +170,11 @@ class MoreMenu(QWidget):
         self.theme_label.setText("라이트 모드" if dark else "다크 모드")
         text_color = p.text_primary
         line_color = p.border
-        bg_color = p.surface
+        bg_color = p.bg
         self._bg_color = bg_color
 
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QLabel#moreMenuItem {{
                 color: {text_color};
                 background: transparent;
@@ -158,8 +188,16 @@ class MoreMenu(QWidget):
             QLabel#moreMenuVersion {{
                 color: {p.text_tertiary};
             }}
-        """)
+        """
+        )
         self.update()
+
+    def refresh_fonts(self):
+        self.theme_label.setFont(body_md())
+        self.help_label.setFont(body_md())
+        self.license_label.setFont(body_md())
+        self.version_label.setFont(ver())
+        self._apply_responsive_size()
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -167,24 +205,13 @@ class MoreMenu(QWidget):
 
         p = palette_for(self._is_dark)
 
-        menu_width = self.width()
-        menu_height = self.height() - self._triangle_size
-        triangle_offset = round(BASE_TRIANGLE_OFFSET * self._scale)
-
-        path = QPainterPath()
-        body_rect = QRectF(0, self._triangle_size, menu_width, menu_height)
-        path.addRoundedRect(body_rect, self._corner_radius, self._corner_radius)
-
-        tip_x = menu_width - triangle_offset
-        triangle = QPainterPath()
-        triangle.moveTo(tip_x - self._triangle_size, self._triangle_size)
-        triangle.lineTo(tip_x, 0)
-        triangle.lineTo(tip_x + self._triangle_size, self._triangle_size)
-        triangle.closeSubpath()
-
-        path.addPath(triangle)
-
         painter.setPen(Qt.NoPen)
+        for grow, alpha in self._shadow_layers:
+            painter.setBrush(QColor(0, 0, 0, alpha))
+            painter.drawPath(self._build_path(grow=grow, dy=self._shadow_y_offset))
+
+        path = self._build_path()
+
         painter.setBrush(QColor(self._bg_color))
         painter.drawPath(path)
 
@@ -196,8 +223,14 @@ class MoreMenu(QWidget):
 
     def show_below(self, anchor_widget: QWidget):
         self._apply_responsive_size()
+
         anchor_global = anchor_widget.mapToGlobal(QPoint(0, anchor_widget.height()))
-        x = anchor_global.x() + anchor_widget.width() - self.width()
-        y = anchor_global.y() + 4
-        self.move(x, y)
+        anchor_center_x = anchor_global.x() + anchor_widget.width() / 2
+        visible_box_x = anchor_center_x - self._menu_width / 2
+        triangle_tip_y = anchor_global.y() + 4
+
+        x = visible_box_x - self._shadow_margin
+        y = triangle_tip_y - self._shadow_margin
+
+        self.move(round(x), round(y))
         self.show()

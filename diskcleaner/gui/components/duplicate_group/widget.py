@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.file_list_item import FileListItem
 from diskcleaner.gui.theme import LIGHT
-from diskcleaner.gui.typo import BASE_WINDOW_WIDTH, body_md, group
+from diskcleaner.gui.typo import body_md, group, rem, set_global_scale
 
 from . import styles
 
@@ -17,14 +17,12 @@ class DuplicateGroupBox(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         self._is_dark = False
-        self._scale = 1.0
         self._items: list[FileListItem] = []
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(
-            styles.BASE_PADDING, styles.BASE_PADDING, styles.BASE_PADDING, styles.BASE_PADDING
-        )
-        outer.setSpacing(styles.BASE_HEADER_GAP)
+        padding = rem(styles.PADDING_REM)
+        outer.setContentsMargins(padding, padding, padding, padding)
+        outer.setSpacing(rem(styles.HEADER_GAP_REM))
 
         header_row = QHBoxLayout()
         header_row.setSpacing(4)
@@ -43,7 +41,7 @@ class DuplicateGroupBox(QWidget):
         outer.addLayout(header_row)
 
         self.items_layout = QVBoxLayout()
-        self.items_layout.setSpacing(styles.BASE_ITEM_GAP)
+        self.items_layout.setSpacing(rem(styles.ITEM_GAP_REM))
         outer.addLayout(self.items_layout)
 
         self._refresh_style()
@@ -84,15 +82,20 @@ class DuplicateGroupBox(QWidget):
         for item in self._items:
             item.set_dark(dark)
 
-    def update_responsive_size(self, container_width: int):
-        scale = container_width / BASE_WINDOW_WIDTH
-        scale = max(styles.SCALE_MIN, min(scale, styles.SCALE_MAX))
-        self._scale = scale
+    def refresh_fonts(self):
+        self.group_name_label.setFont(group())
+        self.group_count_label.setFont(body_md())
+        for item in self._items:
+            item.refresh_fonts()
 
-        padding = round(styles.BASE_PADDING * scale)
+    def update_responsive_size(self, container_width: int):
+        set_global_scale(container_width)
+
+        padding = rem(styles.PADDING_REM)
         self.layout().setContentsMargins(padding, padding, padding, padding)
-        self.layout().setSpacing(round(styles.BASE_HEADER_GAP * scale))
-        self.items_layout.setSpacing(round(styles.BASE_ITEM_GAP * scale))
+        self.layout().setSpacing(rem(styles.HEADER_GAP_REM))
+        self.items_layout.setSpacing(rem(styles.ITEM_GAP_REM))
+        self._refresh_style()
 
         for item in self._items:
             item.update_responsive_size(container_width)
@@ -105,7 +108,7 @@ class DuplicateGroupBox(QWidget):
         self.setStyleSheet(
             f"QWidget#duplicateGroupBox {{"
             f" background: {bg};"
-            f" border-radius: {styles.CORNER_RADIUS}px;"
+            f" border-radius: {rem(styles.CORNER_RADIUS_REM)}px;"
             f" }}"
             f"QLabel#duplicateGroupName, QLabel#duplicateGroupCount {{"
             f" color: {text_color}; background: transparent;"

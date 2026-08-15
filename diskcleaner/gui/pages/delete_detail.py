@@ -4,13 +4,19 @@ from PySide6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QScrollArea, QVBox
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
 from diskcleaner.gui.result_mapping import REVIEW_CATEGORY_LABEL, SAFE_CATEGORY_LABEL
-from diskcleaner.gui.typo import body_mini, headline_small
+from diskcleaner.gui.typo import body_mini, headline_small, rem, set_global_scale
 
 BUTTON_TEXT_DEFAULT = "전체 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
 CHEVRON_EXPANDED = "▼"
 CHEVRON_COLLAPSED = "▶"
+
+# rem 단위(1rem=16px)
+PAGE_MARGIN_REM = 20 / 16
+PAGE_GAP_REM = 16 / 16
+LIST_GAP_REM = 12 / 16
+HEADER_MARGIN_H_REM = 4 / 16
 
 
 class DeletePage(QWidget):
@@ -29,9 +35,7 @@ class DeletePage(QWidget):
         self._group_sections: dict[str, dict] = {}
         self._is_dark = False
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        self._layout = layout = QVBoxLayout(self)
 
         self.back_label = QLabel("‹ 뒤로")
         self.back_label.setObjectName("detailBackLabel")
@@ -56,7 +60,6 @@ class DeletePage(QWidget):
         self.list_container.setObjectName("deleteListContainer")
         self.list_layout = QVBoxLayout(self.list_container)
         self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(12)
         self.list_layout.addStretch()
 
         self.scroll_area.setWidget(self.list_container)
@@ -66,6 +69,8 @@ class DeletePage(QWidget):
         self.action_button.set_text(BUTTON_TEXT_DEFAULT)
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
+
+        self._apply_responsive_size()
 
     # API
     def set_files(self, files: list[dict]):
@@ -128,7 +133,20 @@ class DeletePage(QWidget):
             item.set_dark(dark)
         self.action_button.set_dark(dark)
 
+    def _apply_responsive_size(self):
+        margin = rem(PAGE_MARGIN_REM)
+        self._layout.setContentsMargins(margin, margin, margin, margin)
+        self._layout.setSpacing(rem(PAGE_GAP_REM))
+        self.list_layout.setSpacing(rem(LIST_GAP_REM))
+
+        header_margin = rem(HEADER_MARGIN_H_REM)
+        for header in self._group_headers:
+            header.layout().setContentsMargins(header_margin, 0, header_margin, 0)
+
     def update_responsive_size(self, container_width: int):
+        set_global_scale(container_width)
+        self._apply_responsive_size()
+
         for item in self._items:
             item.update_responsive_size(container_width)
         self.action_button.update_responsive_size(container_width)
@@ -139,6 +157,8 @@ class DeletePage(QWidget):
         for section in self._group_sections.values():
             section["title_label"].setFont(body_mini())
             section["checkbox"].setFont(body_mini())
+        for item in self._items:
+            item.refresh_fonts()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -150,7 +170,8 @@ class DeletePage(QWidget):
         header.setObjectName("deleteGroupHeader")
         header.setCursor(Qt.PointingHandCursor)
         row = QHBoxLayout(header)
-        row.setContentsMargins(4, 0, 4, 0)
+        header_margin = rem(HEADER_MARGIN_H_REM)
+        row.setContentsMargins(header_margin, 0, header_margin, 0)
 
         title = QLabel(f"{CHEVRON_EXPANDED} {category} ({count})")
         title.setObjectName("deleteGroupTitle")

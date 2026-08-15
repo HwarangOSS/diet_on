@@ -3,10 +3,11 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath
 from PySide6.QtWidgets import QWidget
 
 from diskcleaner.gui.theme import palette_for
+from diskcleaner.gui.typo import rem
 
-BAR_WIDTH = 513
-BAR_HEIGHT = 22
-RADIUS = BAR_HEIGHT / 2
+# rem 단위(1rem=16px)
+WIDTH_REM = 513 / 16
+HEIGHT_REM = 22 / 16
 
 
 def _with_alpha(hex_color: str, alpha: int) -> QColor:
@@ -18,7 +19,7 @@ def _with_alpha(hex_color: str, alpha: int) -> QColor:
 class LoadingProgressBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(BAR_WIDTH, BAR_HEIGHT)
+        self.setFixedSize(rem(WIDTH_REM), rem(HEIGHT_REM))
 
         self._progress = 0.0
         self._is_dark = False
@@ -26,6 +27,10 @@ class LoadingProgressBar(QWidget):
         self._anim = QPropertyAnimation(self, b"progress")
         self._anim.setDuration(300)
         self._anim.setEasingCurve(QEasingCurve.OutCubic)
+
+    def update_responsive_size(self):
+        self.setFixedSize(rem(WIDTH_REM), rem(HEIGHT_REM))
+        self.update()
 
     def _get_progress(self):
         return self._progress
@@ -58,10 +63,11 @@ class LoadingProgressBar(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         p = palette_for(self._is_dark)
+        radius = self.height() / 2  # 캡슐 모양 유지 - 실제 높이 기준으로 매번 다시 계산
 
         track_path = QPainterPath()
         track_rect = QRectF(0, 0, self.width(), self.height())
-        track_path.addRoundedRect(track_rect, RADIUS, RADIUS)
+        track_path.addRoundedRect(track_rect, radius, radius)
 
         painter.setPen(Qt.NoPen)
         painter.setBrush(QColor(p.bg))
@@ -79,7 +85,7 @@ class LoadingProgressBar(QWidget):
 
             fill_path = QPainterPath()
             fill_rect = QRectF(0, 0, fill_width, self.height())
-            fill_path.addRoundedRect(fill_rect, RADIUS, RADIUS)
+            fill_path.addRoundedRect(fill_rect, radius, radius)
 
             painter.setPen(Qt.NoPen)
             painter.setBrush(QColor(p.primary))

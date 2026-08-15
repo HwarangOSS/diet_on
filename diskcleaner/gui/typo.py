@@ -5,8 +5,15 @@ from .fonts import load_app_fonts
 
 _current_scale = 1.0
 BASE_WINDOW_WIDTH = 500
+SCALE_MIN = 0.6
+SCALE_MAX = 1.5
 
 MIN_FONT_PT = 6
+
+# rem 단위계: 1rem = 16px (CSS와 동일한 기준), 창 너비 배율(_current_scale)만큼 곱해서
+# 반환하므로 폰트 크기뿐 아니라 레이아웃 치수(너비/높이/여백/radius 등)도 같은 배율로
+# 함께 반응형으로 움직인다.
+REM_PX = 16
 
 _LETTER_SPACING = {
     "headline": 0.2,
@@ -26,11 +33,16 @@ _LETTER_SPACING = {
 def set_global_scale(window_width: int):
     global _current_scale
     scale = window_width / BASE_WINDOW_WIDTH
-    _current_scale = max(0.6, min(scale, 1.5))
+    _current_scale = max(SCALE_MIN, min(scale, SCALE_MAX))
 
 
 def get_global_scale() -> float:
     return _current_scale
+
+
+def rem(value: float, min_px: int = 1) -> int:
+    """rem 값(1rem=16px)을 현재 전역 스케일이 반영된 실제 픽셀로 변환."""
+    return max(min_px, round(value * REM_PX * _current_scale))
 
 
 class FontFamily:

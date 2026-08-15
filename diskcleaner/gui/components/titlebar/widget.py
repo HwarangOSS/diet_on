@@ -11,14 +11,17 @@ from PySide6.QtWidgets import (
 )
 
 from diskcleaner.gui.theme import palette_for
-from diskcleaner.gui.typo import headline
+from diskcleaner.gui.typo import headline, rem
 
 from . import icons
 from .more_menu import MoreMenu
 
-PADDING = 12
-ICON_BUTTON_SIZE = 18
+# rem 단위(1rem=16px) - rem()이 전역 스케일을 반영해 실제 픽셀로 변환한다.
+PADDING_REM = 0.75  # 12px
+ICON_BUTTON_SIZE_REM = 1.125  # 18px
+ICON_GAP_REM = 0.1875  # 3px
 
+# 아래 둘은 렌더된 크기가 아니라 창 너비 자체와 비교하는 임계값이라 스케일 대상이 아님.
 TITLE_COLLAPSE_WIDTH = 250
 MORE_BUTTON_HIDE_WIDTH = 250
 
@@ -44,28 +47,26 @@ class TitleBar(QWidget):
 
         bar = QWidget()
         bar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        bar_layout = QHBoxLayout(bar)
-        bar_layout.setContentsMargins(PADDING, PADDING, PADDING, PADDING)
-        bar_layout.setSpacing(PADDING)
+        self._bar_layout = QHBoxLayout(bar)
 
         self.title_label = QLabel(self._full_title)
         self.title_label.setObjectName("titleLabel")
         self.title_label.setFont(headline())
-        bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)
-        bar_layout.addStretch()
-
-        ICON_GAP = 3
+        self._bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)
+        self._bar_layout.addStretch()
 
         self.menu_button = self._make_icon_button(icons.make_more_icon, self.menu_requested)
-        bar_layout.addWidget(self.menu_button, alignment=Qt.AlignVCenter)
-        bar_layout.addSpacing(ICON_GAP)
+        self._bar_layout.addWidget(self.menu_button, alignment=Qt.AlignVCenter)
+        self._bar_layout.addSpacing(0)
+        self._icon_gap_spacer_1 = self._bar_layout.itemAt(self._bar_layout.count() - 1).spacerItem()
 
         self.min_button = self._make_icon_button(icons.make_minimize_icon, self.minimize_requested)
-        bar_layout.addWidget(self.min_button, alignment=Qt.AlignVCenter)
-        bar_layout.addSpacing(ICON_GAP)
+        self._bar_layout.addWidget(self.min_button, alignment=Qt.AlignVCenter)
+        self._bar_layout.addSpacing(0)
+        self._icon_gap_spacer_2 = self._bar_layout.itemAt(self._bar_layout.count() - 1).spacerItem()
 
         self.close_button = self._make_icon_button(icons.make_close_icon, self.close_requested)
-        bar_layout.addWidget(self.close_button, alignment=Qt.AlignVCenter)
+        self._bar_layout.addWidget(self.close_button, alignment=Qt.AlignVCenter)
 
         outer.addWidget(bar)
 
@@ -82,13 +83,11 @@ class TitleBar(QWidget):
         self.more_menu.help_requested.connect(lambda: print("[DEBUG] 도움말 클릭"))
         self.more_menu.license_requested.connect(lambda: print("[DEBUG] 라이센스 클릭"))
 
-        self.apply_icon_colors(dark=False)
+        self._apply_responsive_size()
 
     def _make_icon_button(self, icon_factory, signal: Signal) -> QPushButton:
         button = QPushButton()
         button.setObjectName("titleIconButton")
-        button.setFixedSize(ICON_BUTTON_SIZE, ICON_BUTTON_SIZE)
-        button.setIconSize(QSize(ICON_BUTTON_SIZE, ICON_BUTTON_SIZE))
         button.setCursor(Qt.PointingHandCursor)
         button.setFlat(True)
         button.clicked.connect(signal.emit)
@@ -105,17 +104,37 @@ class TitleBar(QWidget):
     def apply_icon_colors(self, dark: bool):
         self._is_dark = dark
         color = palette_for(dark).text_primary
-        self.menu_button.setIcon(QIcon(icons.make_more_icon(color)))
-        self.min_button.setIcon(QIcon(icons.make_minimize_icon(color)))
-        self.close_button.setIcon(QIcon(icons.make_close_icon(color)))
+        size = rem(ICON_BUTTON_SIZE_REM)
+        self.menu_button.setIcon(QIcon(icons.make_more_icon(color, size=size)))
+        self.min_button.setIcon(QIcon(icons.make_minimize_icon(color, size=size)))
+        self.close_button.setIcon(QIcon(icons.make_close_icon(color, size=size)))
+
+    def _apply_responsive_size(self):
+        padding = rem(PADDING_REM)
+        self._bar_layout.setContentsMargins(padding, padding, padding, padding)
+        self._bar_layout.setSpacing(padding)
+
+        icon_gap = rem(ICON_GAP_REM)
+        self._icon_gap_spacer_1.changeSize(icon_gap, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
+        self._icon_gap_spacer_2.changeSize(icon_gap, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
+
+        size = rem(ICON_BUTTON_SIZE_REM)
+        for button in (self.menu_button, self.min_button, self.close_button):
+            button.setFixedSize(size, size)
+            button.setIconSize(QSize(size, size))
+
+        self.apply_icon_colors(self._is_dark)
+        self._bar_layout.invalidate()
 
     def update_responsive_layout(self, container_width: int):
         self.menu_button.setVisible(container_width >= MORE_BUTTON_HIDE_WIDTH)
 
         if container_width < TITLE_COLLAPSE_WIDTH:
+            padding = rem(PADDING_REM)
+            icon_button_size = rem(ICON_BUTTON_SIZE_REM)
             metrics = self.title_label.fontMetrics()
             available = max(
-                container_width - (PADDING * 2) - (ICON_BUTTON_SIZE * 3) - (PADDING * 2), 20
+                container_width - (padding * 2) - (icon_button_size * 3) - (padding * 2), 20
             )
             elided = metrics.elidedText(self._full_title, Qt.ElideRight, available)
             self.title_label.setText(elided)
@@ -124,6 +143,7 @@ class TitleBar(QWidget):
 
     def refresh_fonts(self):
         self.title_label.setFont(headline())
+        self._apply_responsive_size()
         self.more_menu.refresh_fonts()
 
     def mousePressEvent(self, event):

@@ -9,6 +9,7 @@ from diskcleaner.core.deletion_pipeline import delete_plan
 from diskcleaner.gui.analysis_worker import start_analysis
 from diskcleaner.gui.components.titlebar import TitleBar
 from diskcleaner.gui.main_window import MainWindow
+from diskcleaner.gui.pages.complete import CompletePage
 from diskcleaner.gui.pages.delete_detail import DeletePage
 from diskcleaner.gui.pages.duplicate_detail import DuplicatePage
 from diskcleaner.gui.pages.home import HomePage
@@ -66,12 +67,14 @@ def main():
     result = ResultPage()
     delete_detail = DeletePage()
     duplicate_detail = DuplicatePage()
+    complete = CompletePage()
 
     stack.addWidget(home)
     stack.addWidget(loading)
     stack.addWidget(result)
     stack.addWidget(delete_detail)
     stack.addWidget(duplicate_detail)
+    stack.addWidget(complete)
 
     root_layout.addWidget(stack)
 
@@ -161,6 +164,14 @@ def main():
             duplicate_detail.update_responsive_size(window.width())
             stack.setCurrentWidget(duplicate_detail)
 
+    def go_to_complete(result_):
+        # 실제 삭제(deletion_manager.delete)가 끝난 뒤 재탐색(go_to_loading) 대신
+        # 이 화면으로 이동해 "정말로 삭제됐다"는 걸 바로 보여준다.
+        complete.set_result(result_.total_deleted, result_.total_size_freed)
+        complete.update_responsive_size(window.width())
+        stack.setCurrentWidget(complete)
+        complete.start()
+
     def on_delete_target_delete_requested(selected_paths):
         plan = state["plan"]
         if plan is None or not selected_paths:
@@ -170,7 +181,7 @@ def main():
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
-        go_to_loading()
+        go_to_complete(result_)
 
     def on_duplicate_delete_requested(selected_paths):
         if not selected_paths:
@@ -180,7 +191,14 @@ def main():
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
-        go_to_loading()
+        go_to_complete(result_)
+
+    def on_complete_continue():
+        # 가정: 삭제 완료 후에는 방금 지운 파일이 반영된 최신 상태가 아니므로
+        # (Result/Delete/Duplicate 화면의 이전 스캔 결과는 낡은 데이터),
+        # 다시 스캔하지 않고 Home으로 돌아가 사용자가 원할 때 재검사하도록 함.
+        complete.stop()
+        stack.setCurrentWidget(home)
 
     home.scan_requested.connect(go_to_loading)
     result.card_clicked.connect(go_to_detail)
@@ -188,6 +206,7 @@ def main():
     duplicate_detail.delete_requested.connect(on_duplicate_delete_requested)
     delete_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
     duplicate_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
+    complete.continue_requested.connect(on_complete_continue)
 
     is_dark = load_dark_mode()
 
@@ -201,6 +220,7 @@ def main():
         result.apply_theme(dark=is_dark)
         delete_detail.apply_theme(dark=is_dark)
         duplicate_detail.apply_theme(dark=is_dark)
+        complete.apply_theme(dark=is_dark)
         save_dark_mode(is_dark)
 
     titlebar.menu_requested.connect(toggle_theme)
@@ -212,6 +232,7 @@ def main():
     result.apply_theme(dark=is_dark)
     delete_detail.apply_theme(dark=is_dark)
     duplicate_detail.apply_theme(dark=is_dark)
+    complete.apply_theme(dark=is_dark)
 
     # 폰트 연결
     set_global_scale(window.width())
@@ -221,12 +242,14 @@ def main():
     window.font_scale_changed.connect(result.refresh_fonts)
     window.font_scale_changed.connect(delete_detail.refresh_fonts)
     window.font_scale_changed.connect(duplicate_detail.refresh_fonts)
+    window.font_scale_changed.connect(complete.refresh_fonts)
     home.refresh_fonts()
     loading.refresh_fonts()
     titlebar.refresh_fonts()
     result.refresh_fonts()
     delete_detail.refresh_fonts()
     duplicate_detail.refresh_fonts()
+    complete.refresh_fonts()
     result.update_responsive_size(window.width())
 
     window.show()

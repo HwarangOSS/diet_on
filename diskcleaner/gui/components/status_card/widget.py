@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QWidget
+from PySide6.QtWidgets import QGraphicsDropShadowEffect, QHBoxLayout, QLabel, QSizePolicy, QWidget
 
 from diskcleaner.gui.theme import LIGHT, palette_for
-from diskcleaner.gui.typo import BASE_WINDOW_WIDTH, body_md, body_mini
+from diskcleaner.gui.typo import body_md, body_mini, rem, set_global_scale
 
 from . import icons, styles
 
@@ -21,7 +21,6 @@ class StatusCard(QWidget):
 
         self._is_dark = False
         self._status = styles.STATUS_SUCCESS
-        self._scale = 1.0
         self._press_inside = False
 
         self._glow_effect = QGraphicsDropShadowEffect(self)
@@ -30,13 +29,13 @@ class StatusCard(QWidget):
         self.setGraphicsEffect(self._glow_effect)
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(
-            styles.BASE_PADDING, styles.BASE_PADDING, styles.BASE_PADDING, styles.BASE_PADDING
-        )
-        layout.setSpacing(styles.BASE_ICON_GAP)
+        padding = rem(styles.PADDING_REM)
+        layout.setContentsMargins(padding, padding, padding, padding)
+        layout.setSpacing(rem(styles.ICON_GAP_REM))
 
         self.icon_label = QLabel()
-        self.icon_label.setFixedSize(styles.BASE_ICON_SIZE, styles.BASE_ICON_SIZE)
+        icon_size = rem(styles.ICON_SIZE_REM)
+        self.icon_label.setFixedSize(icon_size, icon_size)
         layout.addWidget(self.icon_label, alignment=Qt.AlignVCenter)
 
         self.message_label = QLabel()
@@ -44,7 +43,8 @@ class StatusCard(QWidget):
         self.message_label.setFont(body_md())
         layout.addWidget(self.message_label, 1, alignment=Qt.AlignVCenter)
 
-        layout.addSpacing(styles.BASE_META_GAP)
+        layout.addSpacing(rem(styles.META_GAP_REM))
+        self._meta_gap_spacer = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.meta_label = QLabel()
         self.meta_label.setObjectName("statusMeta")
@@ -52,7 +52,7 @@ class StatusCard(QWidget):
         self.meta_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout.addWidget(self.meta_label, alignment=Qt.AlignVCenter)
 
-        self.setFixedSize(styles.BASE_CARD_WIDTH, styles.BASE_CARD_HEIGHT)
+        self.setFixedSize(rem(styles.CARD_WIDTH_REM), rem(styles.CARD_HEIGHT_REM))
         self._apply_icon()
 
     # API
@@ -63,6 +63,11 @@ class StatusCard(QWidget):
         self._apply_icon()
         self.update()
 
+    def refresh_fonts(self):
+        """전역 폰트 스케일 변경 시 카드 내부 라벨도 함께 갱신."""
+        self.message_label.setFont(body_md())
+        self.meta_label.setFont(body_mini())
+
     def set_dark(self, dark: bool):
         self._is_dark = dark
         self._apply_icon()
@@ -70,28 +75,28 @@ class StatusCard(QWidget):
         self._glow_effect.setEnabled(dark)
         if dark:
             self._glow_effect.setColor(QColor(255, 255, 255, 64))
-            self._glow_effect.setBlurRadius(8 * self._scale)
+            self._glow_effect.setBlurRadius(rem(styles.GLOW_BLUR_RADIUS_REM))
         self.update()
 
     def update_responsive_size(self, container_width: int):
-        scale = container_width / BASE_WINDOW_WIDTH
-        scale = max(styles.SCALE_MIN, min(scale, styles.SCALE_MAX))
-        self._scale = scale
+        set_global_scale(container_width)
 
-        self.setFixedSize(
-            round(styles.BASE_CARD_WIDTH * scale), round(styles.BASE_CARD_HEIGHT * scale)
-        )
+        self.setFixedSize(rem(styles.CARD_WIDTH_REM), rem(styles.CARD_HEIGHT_REM))
 
-        margin = round(styles.BASE_PADDING * scale)
+        margin = rem(styles.PADDING_REM)
         self.layout().setContentsMargins(margin, margin, margin, margin)
-        self.layout().setSpacing(round(styles.BASE_ICON_GAP * scale))
+        self.layout().setSpacing(rem(styles.ICON_GAP_REM))
+        self._meta_gap_spacer.changeSize(
+            rem(styles.META_GAP_REM), 0, QSizePolicy.Fixed, QSizePolicy.Minimum
+        )
+        self.layout().invalidate()
 
-        icon_size = round(styles.BASE_ICON_SIZE * scale)
+        icon_size = rem(styles.ICON_SIZE_REM)
         self.icon_label.setFixedSize(icon_size, icon_size)
         self._apply_icon(icon_size)
 
         if self._is_dark:
-            self._glow_effect.setBlurRadius(8 * scale)
+            self._glow_effect.setBlurRadius(rem(styles.GLOW_BLUR_RADIUS_REM))
 
     # 이벤트
     def mousePressEvent(self, event):
@@ -108,7 +113,7 @@ class StatusCard(QWidget):
 
     # 내부
     def _apply_icon(self, icon_size: int | None = None):
-        size = icon_size or self.icon_label.width() or styles.BASE_ICON_SIZE
+        size = icon_size or self.icon_label.width() or rem(styles.ICON_SIZE_REM)
         p = palette_for(self._is_dark)
         color = p.danger if self._status == styles.STATUS_DANGER else p.success
         maker = (
@@ -136,7 +141,7 @@ class StatusCard(QWidget):
         painter.fillPath(path, QColor(p.bg))
         glow = QColor(self._glow_color())
         layers = 6
-        max_width = styles.GLOW_SPREAD * 2 * self._scale
+        max_width = rem(styles.GLOW_SPREAD_REM) * 2
         for i in range(layers):
             t = i / (layers - 1)
             pen_width = max(1, round(max_width * (1 - t)))
