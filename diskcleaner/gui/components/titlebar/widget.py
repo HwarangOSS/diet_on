@@ -124,6 +124,7 @@ class TitleBar(QWidget):
 
     def refresh_fonts(self):
         self.title_label.setFont(headline())
+        self.more_menu.refresh_fonts()
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:

@@ -2,19 +2,19 @@ import os
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QFileDialog, QLabel, QVBoxLayout, QWidget
+from PySide6.QtGui import QFontMetrics
+from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.power_button import PowerButton
-from diskcleaner.gui.typo import body_md, body_mini, headline
+from diskcleaner.gui.theme import palette_for
+from diskcleaner.gui.typo import body_md, headline, path_quote
 
-# 홈 디렉토리 전체는 느려서(파일 수가 많으면 분류/중복탐지가 오래 걸림) 테스트할 땐
-# DIETON_SCAN_PATH 환경변수로 작은 폴더 하나만 지정해서 빠르게 돌릴 수 있게 함.
-# 예 (PowerShell): $env:DIETON_SCAN_PATH = "C:\Users\mings\Downloads\test"
 DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
+
+SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
 
 
 class HomePage(QWidget):
-    """전원 버튼으로 스캔 시작, 라벨 클릭으로 스캔 대상 폴더 선택."""
 
     scan_requested = Signal()
 
@@ -23,6 +23,7 @@ class HomePage(QWidget):
         self.setObjectName("homePage")
 
         self.scan_path = DEFAULT_SCAN_PATH
+        self._is_dark = False
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -41,46 +42,86 @@ class HomePage(QWidget):
 
         layout.addSpacing(8)
 
-        self.sub_label = QLabel("불필요한 파일을\n한번에 간편하게 정리해요")
+        self.path_quote_label = QLabel()
+        self.path_quote_label.setFont(path_quote())
+        self.path_quote_label.setObjectName("pathQuoteLabel")
+        self.path_quote_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.path_quote_label)
+
+        layout.addSpacing(8)
+
+        self.sub_label = QLabel(SUB_TEXT)
         self.sub_label.setTextFormat(Qt.PlainText)
         self.sub_label.setFont(body_md())
         self.sub_label.setObjectName("subLabel")
         self.sub_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.sub_label)
 
-        layout.addSpacing(8)
+        layout.addSpacing(16)
 
-        self.path_label = QLabel(f"검사 폴더: {self.scan_path} (클릭해서 변경)")
-        self.path_label.setFont(body_mini())
-        self.path_label.setObjectName("scanPathLabel")
-        self.path_label.setAlignment(Qt.AlignCenter)
-        self.path_label.setCursor(Qt.PointingHandCursor)
-        self.path_label.mousePressEvent = lambda event: self._choose_scan_path()
-        layout.addWidget(self.path_label)
+        self.change_path_button = QPushButton("탐색 파일 변경")
+        self.change_path_button.setObjectName("changePathButton")
+        self.change_path_button.setFont(body_md())
+        self.change_path_button.setCursor(Qt.PointingHandCursor)
+        self.change_path_button.clicked.connect(self._choose_scan_path)
+        layout.addWidget(self.change_path_button, alignment=Qt.AlignCenter)
 
         self.power_button.clicked_scan.connect(self.scan_requested.emit)
+
+        self._refresh_path_quote_text()
+        self._apply_button_style()
 
     def _choose_scan_path(self):
         """폴더 선택 다이얼로그 띄우고, 고르면 scan_path/라벨 갱신."""
         chosen = QFileDialog.getExistingDirectory(self, "검사할 폴더 선택", self.scan_path)
         if chosen:
             self.scan_path = chosen
-            self.path_label.setText(f"검사 폴더: {self.scan_path} (클릭해서 변경)")
+            self._refresh_path_quote_text()
+
+    def _refresh_path_quote_text(self):
+        metrics = QFontMetrics(self.path_quote_label.font())
+        available_width = max(self.width() - 40, 120)
+        elided = metrics.elidedText(self.scan_path, Qt.ElideMiddle, available_width)
+        self.path_quote_label.setText(f'"{elided}"')
+        self.path_quote_label.setToolTip(self.scan_path)
+
+    def _apply_button_style(self):
+        p = palette_for(self._is_dark)
+        self.change_path_button.setStyleSheet(f"""
+            QPushButton#changePathButton {{
+                background-color: {p.primary};
+                color: #FFFFFF;
+                border: none;
+                border-radius: 18px;
+                padding: 10px 28px;
+            }}
+            QPushButton#changePathButton:hover {{
+                background-color: {p.primary_hover};
+            }}
+            QPushButton#changePathButton:pressed {{
+                background-color: {p.primary_hover};
+            }}
+            """)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         canvas_size = min(self.width(), self.height())
         self.power_button.update_responsive_size(canvas_size)
+        self._refresh_path_quote_text()
 
     def refresh_fonts(self):
         self.click_label.setFont(headline())
+        self.path_quote_label.setFont(path_quote())
         self.sub_label.setFont(body_md())
-        self.path_label.setFont(body_mini())
+        self.change_path_button.setFont(body_md())
+        self._refresh_path_quote_text()
 
     def apply_theme(self, dark: bool):
+        self._is_dark = dark
         self.power_button.set_dark(dark)
+        self._apply_button_style()
 
     def get_scan_path(self) -> str:
         """스캔 대상 경로. 기본값은 홈 디렉토리(또는 DIETON_SCAN_PATH)이고,
-        path_label 클릭으로 사용자가 고르면 그 값으로 바뀜."""
+        버튼 클릭으로 사용자가 고르면 그 값으로 바뀜."""
         return self.scan_path
