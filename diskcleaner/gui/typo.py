@@ -109,6 +109,7 @@ def trust() -> QFont:
 
 # Pretendard ----------------------------------
 
+
 def naming() -> QFont:
     return get_font(FontFamily.PRETENDARD_MEDIUM, 11, role="naming")
 

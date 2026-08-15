@@ -5,25 +5,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QVBoxLayout, QWidget
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import body_md, rem, ver
 
-# 아래 상수는 전부 rem 단위(1rem=16px)다. 실제 픽셀은 rem()이 현재 전역 스케일을
-# 반영해서 계산하므로, 창 크기가 바뀌면 이 팝업도 같이 커지거나 작아진다.
-MENU_WIDTH_REM = 5.75
-ITEM_HEIGHT_REM = 2.125
-SEPARATOR_HEIGHT_REM = 0.0625
-GAP_BEFORE_VERSION_REM = 0.375
-BOTTOM_PADDING_REM = 0.5
-CORNER_RADIUS_REM = 0.5
-TRIANGLE_SIZE_REM = 0.5
-
-SHADOW_MARGIN_REM = 0.5
-SHADOW_Y_OFFSET_REM = 0.125
-# (얼마나 바깥으로 번지는지[rem], 알파값) 쌍을 겹쳐 그려서 흐릿한 그림자를 흉내낸다.
-SHADOW_LAYERS_REM = [
-    (0.0625, 20),
-    (0.125, 14),
-    (0.25, 9),
-    (0.375, 5),
-]
+from . import styles
 
 
 def _with_alpha(hex_color: str, alpha: int) -> QColor:
@@ -78,23 +60,23 @@ class MoreMenu(QWidget):
         self._apply_responsive_size()
 
     def _apply_responsive_size(self):
-        self._menu_width = rem(MENU_WIDTH_REM)
-        self._corner_radius = rem(CORNER_RADIUS_REM)
-        self._triangle_size = rem(TRIANGLE_SIZE_REM)
-        self._shadow_margin = rem(SHADOW_MARGIN_REM)
-        self._shadow_y_offset = rem(SHADOW_Y_OFFSET_REM)
-        self._shadow_layers = [(rem(grow), alpha) for grow, alpha in SHADOW_LAYERS_REM]
+        self._menu_width = rem(styles.MENU_WIDTH_REM)
+        self._corner_radius = rem(styles.CORNER_RADIUS_REM)
+        self._triangle_size = rem(styles.TRIANGLE_SIZE_REM)
+        self._shadow_margin = rem(styles.SHADOW_MARGIN_REM)
+        self._shadow_y_offset = rem(styles.SHADOW_Y_OFFSET_REM)
+        self._shadow_layers = [(rem(grow), alpha) for grow, alpha in styles.SHADOW_LAYERS_REM]
 
-        item_height = rem(ITEM_HEIGHT_REM)
+        item_height = rem(styles.ITEM_HEIGHT_REM)
         for label in (self.theme_label, self.help_label, self.license_label):
             label.setFixedHeight(item_height)
 
-        separator_height = rem(SEPARATOR_HEIGHT_REM)
+        separator_height = rem(styles.SEPARATOR_HEIGHT_REM)
         for separator in self._separators:
             separator.setFixedHeight(separator_height)
 
-        self._gap_before_version.setFixedHeight(rem(GAP_BEFORE_VERSION_REM))
-        self._bottom_padding.setFixedHeight(rem(BOTTOM_PADDING_REM))
+        self._gap_before_version.setFixedHeight(rem(styles.GAP_BEFORE_VERSION_REM))
+        self._bottom_padding.setFixedHeight(rem(styles.BOTTOM_PADDING_REM))
 
         self._layout.setContentsMargins(
             self._shadow_margin,
@@ -129,9 +111,13 @@ class MoreMenu(QWidget):
 
         tip_x = self._shadow_margin + self._menu_width / 2
         triangle = QPainterPath()
-        triangle.moveTo(tip_x - self._triangle_size - grow, self._shadow_margin + self._triangle_size + dy)
+        triangle.moveTo(
+            tip_x - self._triangle_size - grow, self._shadow_margin + self._triangle_size + dy
+        )
         triangle.lineTo(tip_x, self._shadow_margin - grow + dy)
-        triangle.lineTo(tip_x + self._triangle_size + grow, self._shadow_margin + self._triangle_size + dy)
+        triangle.lineTo(
+            tip_x + self._triangle_size + grow, self._shadow_margin + self._triangle_size + dy
+        )
         triangle.closeSubpath()
 
         path.addPath(triangle)

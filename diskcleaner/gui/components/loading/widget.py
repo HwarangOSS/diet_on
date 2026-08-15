@@ -5,9 +5,7 @@ from PySide6.QtWidgets import QWidget
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import rem
 
-
-WIDTH_REM = 320 / 16
-HEIGHT_REM = 10 / 16
+from . import styles
 
 
 def _with_alpha(hex_color: str, alpha: int) -> QColor:
@@ -19,7 +17,7 @@ def _with_alpha(hex_color: str, alpha: int) -> QColor:
 class LoadingProgressBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setFixedSize(rem(WIDTH_REM), rem(HEIGHT_REM))
+        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
 
         self._progress = 0.0
         self._is_dark = False
@@ -29,7 +27,7 @@ class LoadingProgressBar(QWidget):
         self._anim.setEasingCurve(QEasingCurve.OutCubic)
 
     def update_responsive_size(self):
-        self.setFixedSize(rem(WIDTH_REM), rem(HEIGHT_REM))
+        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
         self.update()
 
     def _get_progress(self):
@@ -63,7 +61,7 @@ class LoadingProgressBar(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         p = palette_for(self._is_dark)
-        radius = self.height() / 2 
+        radius = self.height() / 2
 
         track_path = QPainterPath()
         track_rect = QRectF(0, 0, self.width(), self.height())

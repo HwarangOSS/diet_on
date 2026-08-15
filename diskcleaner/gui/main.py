@@ -106,7 +106,7 @@ def main():
         if state["progress_value"] < PROGRESS_TICK_CAP:
             state["progress_value"] += PROGRESS_TICK_STEP
             loading.update_progress(state["progress_value"])
-            print(f"{state['progress_value']}% (스캔 백그라운드 진행 중)")
+            print(f"{state['progress_value']}%")
 
     def on_analysis_finished(report, plan):
         _stop_progress_timer()

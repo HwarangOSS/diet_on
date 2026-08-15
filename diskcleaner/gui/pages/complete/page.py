@@ -5,13 +5,10 @@ from diskcleaner.gui.components.loading import icons as loading_icons
 from diskcleaner.gui.components.side_action_button import SideActionButton
 from diskcleaner.gui.typo import body_md, headline, rem
 
-ICON_SIZE_REM = 120 / 16
-ICON_GAP_REM = 20 / 16
-TITLE_GAP_REM = 8 / 16
+from . import styles
 
 TITLE_TEXT = "Delete Complete!"
 RESULT_BUTTON_TEXT = "Result"
-REFERENCE_WIDTH = 880
 
 
 class CompletePage(QWidget):
@@ -59,7 +56,7 @@ class CompletePage(QWidget):
         self.summary_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.summary_label)
 
-        self._apply_responsive_size(REFERENCE_WIDTH)
+        self._apply_responsive_size(styles.REFERENCE_WIDTH)
 
     # API
     def set_result(self, deleted_count: int, size_freed_bytes: int):
@@ -76,16 +73,20 @@ class CompletePage(QWidget):
         self.result_button.set_dark(dark)
 
     def _apply_responsive_size(self, container_width: int):
-        self._icon_gap.changeSize(0, rem(ICON_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self._title_gap.changeSize(0, rem(TITLE_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self._icon_gap.changeSize(
+            0, rem(styles.ICON_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._title_gap.changeSize(
+            0, rem(styles.TITLE_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
         self._layout.invalidate()
 
-        icon_size = rem(ICON_SIZE_REM)
+        icon_size = rem(styles.ICON_SIZE_REM)
         if icon_size != self.icon_label.width():
             self.icon_label.setFixedSize(icon_size, icon_size)
             self.icon_label.setPixmap(loading_icons.make_file1_icon(size=icon_size))
 
-        scale = container_width / REFERENCE_WIDTH
+        scale = container_width / styles.REFERENCE_WIDTH
         self.result_button.update_responsive_size(self.height(), scale=scale)
         self._right_spacer.setFixedWidth(self.result_button.width())
 

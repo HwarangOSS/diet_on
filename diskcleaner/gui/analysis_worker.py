@@ -9,7 +9,6 @@ from diskcleaner.core.smart_cleanup import CleanupReport, SmartCleanupEngine
 
 
 class AnalysisWorker(QObject):
-
     finished = Signal(CleanupReport, DeletionPlan)
     error = Signal(str)
 
@@ -23,9 +22,7 @@ class AnalysisWorker(QObject):
         try:
             engine = SmartCleanupEngine(self.target_path)
             report = engine.analyze()
-            duplicate_paths = {
-                f.path for group in report.duplicates for f in group.files
-            }
+            duplicate_paths = {f.path for group in report.duplicates for f in group.files}
             candidates = [
                 f
                 for f in report.by_risk.get("safe", []) + report.by_risk.get("confirm_needed", [])

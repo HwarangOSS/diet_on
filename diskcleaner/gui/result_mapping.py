@@ -8,6 +8,7 @@ SAFE_CATEGORY_LABEL = "즉시 삭제 가능"
 
 REVIEW_CATEGORY_LABEL = "검토 필요"
 
+
 def report_to_delete_files(report: CleanupReport, plan: DeletionPlan | None = None) -> list:
     if plan is None:
         return []
@@ -58,8 +59,10 @@ def remove_deleted_paths(
     new_groups = []
     for group in report.duplicates:
         remaining = [f for f in group.files if f.path not in deleted_paths]
-        if len(remaining) > 1: 
-            new_groups.append(DuplicateGroup(files=remaining, size=group.size, hash_value=group.hash_value))
+        if len(remaining) > 1:
+            new_groups.append(
+                DuplicateGroup(files=remaining, size=group.size, hash_value=group.hash_value)
+            )
     report.duplicates = new_groups
 
     if plan is not None:

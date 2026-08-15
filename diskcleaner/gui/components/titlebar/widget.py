@@ -13,20 +13,12 @@ from PySide6.QtWidgets import (
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import FontFamily, get_font, rem
 
-from . import icons
+from . import icons, styles
 from .more_menu import MoreMenu
 
 
-PADDING_REM = 0.5 
-ICON_BUTTON_SIZE_REM = 1.125
-ICON_GAP_REM = 0.1875 
-TITLE_FONT_PT = 15  
-
 def _title_font():
-    return get_font(FontFamily.PLAY_REGULAR, TITLE_FONT_PT, role="headline")
-
-TITLE_COLLAPSE_WIDTH = 250
-MORE_BUTTON_HIDE_WIDTH = 250
+    return get_font(FontFamily.PLAY_REGULAR, styles.TITLE_FONT_PT, role="headline")
 
 
 class TitleBar(QWidget):
@@ -107,21 +99,21 @@ class TitleBar(QWidget):
     def apply_icon_colors(self, dark: bool):
         self._is_dark = dark
         color = palette_for(dark).text_primary
-        size = rem(ICON_BUTTON_SIZE_REM)
+        size = rem(styles.ICON_BUTTON_SIZE_REM)
         self.menu_button.setIcon(QIcon(icons.make_more_icon(color, size=size)))
         self.min_button.setIcon(QIcon(icons.make_minimize_icon(color, size=size)))
         self.close_button.setIcon(QIcon(icons.make_close_icon(color, size=size)))
 
     def _apply_responsive_size(self):
-        padding = rem(PADDING_REM)
+        padding = rem(styles.PADDING_REM)
         self._bar_layout.setContentsMargins(padding, padding, padding, padding)
         self._bar_layout.setSpacing(padding)
 
-        icon_gap = rem(ICON_GAP_REM)
+        icon_gap = rem(styles.ICON_GAP_REM)
         self._icon_gap_spacer_1.changeSize(icon_gap, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
         self._icon_gap_spacer_2.changeSize(icon_gap, 0, QSizePolicy.Fixed, QSizePolicy.Minimum)
 
-        size = rem(ICON_BUTTON_SIZE_REM)
+        size = rem(styles.ICON_BUTTON_SIZE_REM)
         for button in (self.menu_button, self.min_button, self.close_button):
             button.setFixedSize(size, size)
             button.setIconSize(QSize(size, size))
@@ -130,11 +122,11 @@ class TitleBar(QWidget):
         self._bar_layout.invalidate()
 
     def update_responsive_layout(self, container_width: int):
-        self.menu_button.setVisible(container_width >= MORE_BUTTON_HIDE_WIDTH)
+        self.menu_button.setVisible(container_width >= styles.MORE_BUTTON_HIDE_WIDTH)
 
-        if container_width < TITLE_COLLAPSE_WIDTH:
-            padding = rem(PADDING_REM)
-            icon_button_size = rem(ICON_BUTTON_SIZE_REM)
+        if container_width < styles.TITLE_COLLAPSE_WIDTH:
+            padding = rem(styles.PADDING_REM)
+            icon_button_size = rem(styles.ICON_BUTTON_SIZE_REM)
             metrics = self.title_label.fontMetrics()
             available = max(
                 container_width - (padding * 2) - (icon_button_size * 3) - (padding * 2), 20

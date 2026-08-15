@@ -29,7 +29,6 @@ def _size_font(scale: float):
 
 
 class FileListItem(QWidget):
-
     toggled = Signal(bool)
 
     def __init__(self, parent=None):

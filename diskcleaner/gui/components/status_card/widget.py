@@ -9,7 +9,7 @@ from diskcleaner.gui.typo import FontFamily, get_font
 
 from . import icons, styles
 
-REFERENCE_WIDTH = 880 
+REFERENCE_WIDTH = 880
 
 
 def _message_font(scale: float):

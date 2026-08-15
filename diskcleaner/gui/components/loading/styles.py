@@ -1,0 +1,2 @@
+WIDTH_REM = 320 / 16
+HEIGHT_REM = 10 / 16

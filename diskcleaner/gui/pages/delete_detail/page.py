@@ -14,27 +14,17 @@ from diskcleaner.gui.components.tri_state_checkbox import TriStateCheckBox
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import FontFamily, get_font
 
+from . import styles
+
 BUTTON_TEXT_DEFAULT = "전체 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
 BACK_BUTTON_TEXT = "Back"
 SELECT_ALL_TEXT = "전체 선택"
-REFERENCE_WIDTH = 880
-
-REF_MARGIN = 130
-REF_MARGIN_TOP = 40
-REF_MARGIN_BOTTOM = 0
-REF_PAGE_GAP = 16
-REF_LIST_GAP = 12
-REF_SELECT_ALL_GAP = 8
-
-ACTION_BUTTON_HEIGHT_SCALE = 0.55
-ACTION_BUTTON_WIDTH_SCALE = 0.8
-ACTION_BUTTON_TEXT_SIZE = 11
 
 
 def _design_scale(container_width: int) -> float:
-    return container_width / REFERENCE_WIDTH
+    return container_width / styles.REFERENCE_WIDTH
 
 
 def _title_font(scale: float):
@@ -107,7 +97,7 @@ class DeletePage(QWidget):
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
 
-        self.update_responsive_size(REFERENCE_WIDTH)
+        self.update_responsive_size(styles.REFERENCE_WIDTH)
 
     # API
     def set_files(self, files: list[dict]):
@@ -118,18 +108,18 @@ class DeletePage(QWidget):
         self._items.clear()
         self._files = list(files)
 
-        insert_at = self.list_layout.count() - 1  
+        insert_at = self.list_layout.count() - 1
         for f in files:
             item = FileListItem()
             item.set_file(f["name"], f["path"], f["size_bytes"], f.get("reason"))
-            item.set_selected(True, emit=False) 
+            item.set_selected(True, emit=False)
             item.set_dark(self._is_dark)
             item.toggled.connect(self._on_item_toggled)
             self.list_layout.insertWidget(insert_at, item)
             insert_at += 1
             self._items.append(item)
 
-        self.update_responsive_size(self.width() or REFERENCE_WIDTH)
+        self.update_responsive_size(self.width() or styles.REFERENCE_WIDTH)
         self._refresh_button_text()
         self._refresh_select_all_checkbox()
 
@@ -148,13 +138,13 @@ class DeletePage(QWidget):
         self.select_all_checkbox.setFont(_label_font(scale))
         self.select_all_checkbox.set_scale(scale)
 
-        margin = round(REF_MARGIN * scale)
-        margin_top = round(REF_MARGIN_TOP * scale)
-        margin_bottom = round(REF_MARGIN_BOTTOM * scale)
+        margin = round(styles.REF_MARGIN * scale)
+        margin_top = round(styles.REF_MARGIN_TOP * scale)
+        margin_bottom = round(styles.REF_MARGIN_BOTTOM * scale)
         self._layout.setContentsMargins(margin, margin_top, margin, margin_bottom)
-        self._layout.setSpacing(round(REF_PAGE_GAP * scale))
-        self.list_layout.setSpacing(round(REF_LIST_GAP * scale))
-        self._select_all_row.setContentsMargins(0, 0, 0, round(REF_SELECT_ALL_GAP * scale))
+        self._layout.setSpacing(round(styles.REF_PAGE_GAP * scale))
+        self.list_layout.setSpacing(round(styles.REF_LIST_GAP * scale))
+        self._select_all_row.setContentsMargins(0, 0, 0, round(styles.REF_SELECT_ALL_GAP * scale))
 
         back_button_width = self.back_button.width()
         content_width = max(1, container_width - back_button_width - 2 * margin)
@@ -163,15 +153,15 @@ class DeletePage(QWidget):
         for item in self._items:
             item.update_responsive_size(container_width)
         self.action_button.update_responsive_size(
-            round(content_width * ACTION_BUTTON_WIDTH_SCALE),
+            round(content_width * styles.ACTION_BUTTON_WIDTH_SCALE),
             scale=scale,
-            height_scale=ACTION_BUTTON_HEIGHT_SCALE,
-            text_size=ACTION_BUTTON_TEXT_SIZE,
+            height_scale=styles.ACTION_BUTTON_HEIGHT_SCALE,
+            text_size=styles.ACTION_BUTTON_TEXT_SIZE,
         )
         self.back_button.update_responsive_size(self.height(), scale=scale)
 
     def refresh_fonts(self):
-        self.update_responsive_size(self.width() or REFERENCE_WIDTH)
+        self.update_responsive_size(self.width() or styles.REFERENCE_WIDTH)
         for item in self._items:
             item.refresh_fonts()
 

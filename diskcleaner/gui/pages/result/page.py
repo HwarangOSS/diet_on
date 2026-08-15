@@ -7,23 +7,11 @@ from diskcleaner.gui.components.status_card import STATUS_DANGER, STATUS_SUCCESS
 from diskcleaner.gui.components.status_card.styles import format_gb
 from diskcleaner.gui.typo import FontFamily, get_font
 
-# 디자인 기준 너비. 아래 REF_* 값은 전부 "창 너비가 이만큼일 때" 실측 px이고,
-# 실제로는 design_scale = 창너비 / REFERENCE_WIDTH 만큼 곱해서 쓴다. 즉 창이
-# 커지거나 작아져도 항상 이 비율(margin:content:icon 등의 관계)이 그대로 유지된다.
-REFERENCE_WIDTH = 880
-
-REF_MARGIN = 190
-REF_MARGIN_TOP = 150
-REF_ICON_SIZE = 148
-REF_SUMMARY_GAP = 20
-REF_SUMMARY_TEXT_GAP = 0
-REF_HEADING_GAP = 16
-REF_CARDS_GAP = 8
-REF_CARDS_ITEM_GAP = 16
+from . import styles
 
 
 def _design_scale(container_width: int) -> float:
-    return container_width / REFERENCE_WIDTH
+    return container_width / styles.REFERENCE_WIDTH
 
 
 def _capacity_font(scale: float):
@@ -66,8 +54,6 @@ CARD_TEXTS = {
 
 
 class ResultPage(QWidget):
-    """분석 결과 요약 화면 - 삭제 대상/중복 카드, 클릭 시 상세 페이지로 이동."""
-
     card_clicked = Signal(str)
 
     def __init__(self, parent=None):
@@ -123,7 +109,7 @@ class ResultPage(QWidget):
             self.cards_layout.addWidget(card)
             self._cards[key] = card
 
-        self.update_responsive_size(REFERENCE_WIDTH)
+        self.update_responsive_size(styles.REFERENCE_WIDTH)
 
     # API ----
     def set_path(self, path: str):
@@ -135,7 +121,7 @@ class ResultPage(QWidget):
             self.path_label.setText("")
             return
         metrics = QFontMetrics(self.path_label.font())
-        margin = round(REF_MARGIN * _design_scale(self.width()))
+        margin = round(styles.REF_MARGIN * _design_scale(self.width()))
         available_width = max(self.width() - margin * 2, 0)
         elided = metrics.elidedText(
             f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width
@@ -171,22 +157,22 @@ class ResultPage(QWidget):
         _tighten(self.capacity_label)
         _tighten(self.gb_label)
 
-        margin = round(REF_MARGIN * scale)
-        margin_top = round(REF_MARGIN_TOP * scale)
+        margin = round(styles.REF_MARGIN * scale)
+        margin_top = round(styles.REF_MARGIN_TOP * scale)
         self._layout.setContentsMargins(margin, margin_top, margin, margin)
-        self._layout.setSpacing(round(REF_CARDS_GAP * scale))
-        self._summary_row.setSpacing(round(REF_SUMMARY_GAP * scale))
-        self._summary_text_col.setSpacing(round(REF_SUMMARY_TEXT_GAP * scale))
+        self._layout.setSpacing(round(styles.REF_CARDS_GAP * scale))
+        self._summary_row.setSpacing(round(styles.REF_SUMMARY_GAP * scale))
+        self._summary_text_col.setSpacing(round(styles.REF_SUMMARY_TEXT_GAP * scale))
         self._heading_gap.changeSize(
-            0, round(REF_HEADING_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
+            0, round(styles.REF_HEADING_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
         )
         self._cards_gap.changeSize(
-            0, round(REF_CARDS_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
+            0, round(styles.REF_CARDS_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
         )
-        self.cards_layout.setSpacing(round(REF_CARDS_ITEM_GAP * scale))
+        self.cards_layout.setSpacing(round(styles.REF_CARDS_ITEM_GAP * scale))
         self._layout.invalidate()
 
-        icon_size = max(1, round(REF_ICON_SIZE * scale))
+        icon_size = max(1, round(styles.REF_ICON_SIZE * scale))
         if icon_size != self.summary_icon.width():
             self.summary_icon.setFixedSize(icon_size, icon_size)
             self.summary_icon.setPixmap(loading_icons.make_file2_icon(size=icon_size))

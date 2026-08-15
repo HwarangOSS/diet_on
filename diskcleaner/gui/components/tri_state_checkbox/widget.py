@@ -4,6 +4,8 @@ from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
+from . import styles
+
 
 class TriStateCheckBox(QWidget):
 
@@ -13,9 +15,9 @@ class TriStateCheckBox(QWidget):
         super().__init__(parent)
         self._text = text
         self._state = Qt.Unchecked
-        self._color = "#3A4A63"
-        self._base_box_size = 12
-        self._base_gap = 6
+        self._color = styles.DEFAULT_COLOR
+        self._base_box_size = styles.BASE_BOX_SIZE
+        self._base_gap = styles.BASE_GAP
         self._box_size = self._base_box_size
         self._gap = self._base_gap
         self.setCursor(Qt.PointingHandCursor)
@@ -35,8 +37,8 @@ class TriStateCheckBox(QWidget):
         self.update()
 
     def set_scale(self, scale: float):
-        self._box_size = max(8, round(self._base_box_size * scale))
-        self._gap = max(2, round(self._base_gap * scale))
+        self._box_size = max(styles.MIN_BOX_SIZE, round(self._base_box_size * scale))
+        self._gap = max(styles.MIN_GAP, round(self._base_gap * scale))
         self.updateGeometry()
         self.update()
 
