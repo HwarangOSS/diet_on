@@ -1,17 +1,17 @@
 STATUS_DANGER = "danger"
 STATUS_SUCCESS = "success"
 
-# rem 단위(1rem=16px)
-CARD_WIDTH_REM = 463 / 16
-CARD_HEIGHT_REM = 61 / 16
-CORNER_RADIUS_RATIO = 16 / 61  # 높이에 대한 비율이라 px 변환 대상이 아님
+# 아래 REF_* 값은 result.py와 같은 기준(창 너비 1000px일 때 실측 px)이고, 실제로는
+# result.py가 넘겨주는 design_scale(= 창너비 / 1000)만큼 곱해서 쓴다.
+REF_CARD_HEIGHT = 84
+CORNER_RADIUS_RATIO = 16 / 61  # 높이에 대한 비율이라 스케일 대상이 아님
 
-PADDING_REM = 3 / 16
-ICON_SIZE_REM = 24 / 16
-ICON_GAP_REM = 8 / 16
-META_GAP_REM = 8 / 16
-GLOW_SPREAD_REM = 12 / 16
-GLOW_BLUR_RADIUS_REM = 8 / 16
+REF_PADDING = 14
+REF_ICON_SIZE = 26
+REF_ICON_GAP = 12
+REF_META_GAP = 10
+REF_GLOW_SPREAD = 5
+REF_GLOW_BLUR_RADIUS = 8
 
 
 def format_gb(size_bytes: int) -> str:

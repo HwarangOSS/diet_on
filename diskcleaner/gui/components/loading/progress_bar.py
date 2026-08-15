@@ -5,9 +5,9 @@ from PySide6.QtWidgets import QWidget
 from diskcleaner.gui.theme import palette_for
 from diskcleaner.gui.typo import rem
 
-# rem 단위(1rem=16px)
-WIDTH_REM = 513 / 16
-HEIGHT_REM = 22 / 16
+
+WIDTH_REM = 320 / 16
+HEIGHT_REM = 10 / 16
 
 
 def _with_alpha(hex_color: str, alpha: int) -> QColor:
@@ -63,7 +63,7 @@ class LoadingProgressBar(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         p = palette_for(self._is_dark)
-        radius = self.height() / 2  # 캡슐 모양 유지 - 실제 높이 기준으로 매번 다시 계산
+        radius = self.height() / 2 
 
         track_path = QPainterPath()
         track_rect = QRectF(0, 0, self.width(), self.height())

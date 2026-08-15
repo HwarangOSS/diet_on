@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.duplicate_group import DuplicateGroupBox
-from diskcleaner.gui.typo import body_mini, headline_small, rem, set_global_scale
+from diskcleaner.gui.typo import body_mini, headline_small, rem
 
 BUTTON_TEXT_DEFAULT = "그룹당 1개 남기고 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
@@ -97,7 +97,6 @@ class DuplicatePage(QWidget):
         self.list_layout.setSpacing(rem(LIST_GAP_REM))
 
     def update_responsive_size(self, container_width: int):
-        set_global_scale(container_width)
         self._apply_responsive_size()
 
         for group_box in self._groups:

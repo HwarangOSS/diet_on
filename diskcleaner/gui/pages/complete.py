@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.loading import icons as loading_icons
-from diskcleaner.gui.typo import body_md, headline, rem, set_global_scale
+from diskcleaner.gui.typo import body_md, headline, rem
 
 # rem 단위(1rem=16px)
 ICON_SIZE_REM = 120 / 16
@@ -99,7 +99,6 @@ class CompletePage(QWidget):
             self.icon_label.setPixmap(loading_icons.make_file1_icon(size=icon_size))
 
     def update_responsive_size(self, container_width: int):
-        set_global_scale(container_width)
         self._apply_responsive_size()
 
     def refresh_fonts(self):

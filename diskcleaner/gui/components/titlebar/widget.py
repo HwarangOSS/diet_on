@@ -11,17 +11,20 @@ from PySide6.QtWidgets import (
 )
 
 from diskcleaner.gui.theme import palette_for
-from diskcleaner.gui.typo import headline, rem
+from diskcleaner.gui.typo import FontFamily, get_font, rem
 
 from . import icons
 from .more_menu import MoreMenu
 
-# rem 단위(1rem=16px) - rem()이 전역 스케일을 반영해 실제 픽셀로 변환한다.
-PADDING_REM = 0.75  # 12px
-ICON_BUTTON_SIZE_REM = 1.125  # 18px
-ICON_GAP_REM = 0.1875  # 3px
 
-# 아래 둘은 렌더된 크기가 아니라 창 너비 자체와 비교하는 임계값이라 스케일 대상이 아님.
+PADDING_REM = 0.5 
+ICON_BUTTON_SIZE_REM = 1.125
+ICON_GAP_REM = 0.1875 
+TITLE_FONT_PT = 15  
+
+def _title_font():
+    return get_font(FontFamily.PLAY_REGULAR, TITLE_FONT_PT, role="headline")
+
 TITLE_COLLAPSE_WIDTH = 250
 MORE_BUTTON_HIDE_WIDTH = 250
 
@@ -51,7 +54,7 @@ class TitleBar(QWidget):
 
         self.title_label = QLabel(self._full_title)
         self.title_label.setObjectName("titleLabel")
-        self.title_label.setFont(headline())
+        self.title_label.setFont(_title_font())
         self._bar_layout.addWidget(self.title_label, alignment=Qt.AlignVCenter)
         self._bar_layout.addStretch()
 
@@ -142,7 +145,7 @@ class TitleBar(QWidget):
             self.title_label.setText(self._full_title)
 
     def refresh_fonts(self):
-        self.title_label.setFont(headline())
+        self.title_label.setFont(_title_font())
         self._apply_responsive_size()
         self.more_menu.refresh_fonts()
 

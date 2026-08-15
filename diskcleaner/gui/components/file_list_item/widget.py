@@ -5,7 +5,7 @@ from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.theme import DARK, LIGHT
-from diskcleaner.gui.typo import body_md, body_mini, hashtag, naming, rem, set_global_scale
+from diskcleaner.gui.typo import body_md, body_mini, hashtag, naming, rem
 
 from . import styles
 
@@ -150,8 +150,6 @@ class FileListItem(QWidget):
         self.update()
 
     def update_responsive_size(self, container_width: int):
-        set_global_scale(container_width)
-
         self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
 
         h_margin = rem(styles.PADDING_H_REM)

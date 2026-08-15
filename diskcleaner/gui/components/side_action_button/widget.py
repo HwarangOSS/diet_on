@@ -3,17 +3,19 @@ from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
 from diskcleaner.gui.theme import LIGHT
-from diskcleaner.gui.typo import headline_small, rem
+from diskcleaner.gui.typo import body_mini, rem
 
 from . import styles
 
 
-class BottomActionButton(QWidget):
+class SideActionButton(QWidget):
+    """화면 왼쪽 밖에서 오른쪽으로 볼록 튀어나온 원형 버튼 (뒤로가기용)."""
+
     clicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setObjectName("bottomActionButton")
+        self.setObjectName("sideActionButton")
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setCursor(Qt.PointingHandCursor)
         self.setMouseTracking(True)
@@ -28,7 +30,7 @@ class BottomActionButton(QWidget):
         self._scale_anim.setDuration(styles.ANIM_DURATION_MS)
         self._scale_anim.setEasingCurve(QEasingCurve.OutCubic)
 
-        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
+        self.setFixedSize(rem(styles.VISIBLE_WIDTH_REM), rem(styles.DIAMETER_REM))
 
     def _get_scale(self):
         return self._scale
@@ -48,8 +50,8 @@ class BottomActionButton(QWidget):
         self._is_dark = dark
         self.update()
 
-    def update_responsive_size(self, container_width: int):
-        self.setFixedSize(container_width, rem(styles.HEIGHT_REM))
+    def update_responsive_size(self, container_height: int):
+        self.setFixedSize(rem(styles.VISIBLE_WIDTH_REM), rem(styles.DIAMETER_REM))
 
     # 이벤트
     def enterEvent(self, event):
@@ -107,10 +109,11 @@ class BottomActionButton(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w, h = self.width(), self.height()
+        diameter = max(w, h)
 
-        # 호버 애니메이션
+        # 호버 애니메이션 - 왼쪽 바깥(화면 밖) 쪽을 기준점으로 살짝 커짐
         painter.save()
-        pivot = QPointF(w / 2, h)
+        pivot = QPointF(0, h / 2)
         painter.translate(pivot)
         painter.scale(self._scale, self._scale)
         painter.translate(-pivot)
@@ -119,8 +122,9 @@ class BottomActionButton(QWidget):
         clip.addRect(QRectF(0, 0, w, h))
         painter.setClipPath(clip)
 
+        circle_rect = QRectF(w - diameter, (h - diameter) / 2, diameter, diameter)
         dome = QPainterPath()
-        dome.addEllipse(QRectF(0, 0, w, h * 2))
+        dome.addEllipse(circle_rect)
         painter.fillPath(dome, self._background_color())
         layers = 6
         max_width = rem(styles.GLOW_SPREAD_REM) * 2
@@ -136,9 +140,9 @@ class BottomActionButton(QWidget):
 
         if self._text:
             painter.setPen(QColor("#FFFFFF"))
-            painter.setFont(headline_small())
-            text_rect = QRectF(0, 0, w, h * 0.6)
-            painter.drawText(text_rect, Qt.AlignHCenter | Qt.AlignTop, self._text)
+            painter.setFont(body_mini())
+            text_rect = QRectF(0, 0, w, h)
+            painter.drawText(text_rect, Qt.AlignCenter, self._text)
 
         painter.restore()
         painter.end()

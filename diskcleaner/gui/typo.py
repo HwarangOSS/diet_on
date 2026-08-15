@@ -40,9 +40,11 @@ def get_global_scale() -> float:
     return _current_scale
 
 
-def rem(value: float, min_px: int = 1) -> int:
-    """rem 값(1rem=16px)을 현재 전역 스케일이 반영된 실제 픽셀로 변환."""
-    return max(min_px, round(value * REM_PX * _current_scale))
+def rem(value: float, min_px: int = 1, scale: float | None = None) -> int:
+    """rem 값(1rem=16px)을 실제 픽셀로 변환. scale을 넘기지 않으면 전역 스케일을 쓰고,
+    특정 값을 창 크기와 무관하게 고정하고 싶을 때는 scale=1.0을 넘기면 된다."""
+    effective_scale = _current_scale if scale is None else scale
+    return max(min_px, round(value * REM_PX * effective_scale))
 
 
 class FontFamily:
@@ -59,16 +61,23 @@ class FontFamily:
     PRETENDARD_BLACK = "Pretendard-Black"
 
 
-def get_font(family_key: str, size: int, bold: bool = False, role: str | None = None) -> QFont:
+def get_font(
+    family_key: str,
+    size: int,
+    bold: bool = False,
+    role: str | None = None,
+    scale: float | None = None,
+) -> QFont:
     families = load_app_fonts()
     family_name = families.get(family_key, "Arial")
-    scaled_size = max(MIN_FONT_PT, int(size * _current_scale))
+    effective_scale = _current_scale if scale is None else scale
+    scaled_size = max(MIN_FONT_PT, int(size * effective_scale))
     font = QFont(family_name, scaled_size)
     font.setBold(bold)
 
     spacing = _LETTER_SPACING.get(role, 0.0)
     if spacing:
-        font.setLetterSpacing(QFont.AbsoluteSpacing, spacing * _current_scale)
+        font.setLetterSpacing(QFont.AbsoluteSpacing, spacing * effective_scale)
     return font
 
 

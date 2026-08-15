@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.file_list_item import FileListItem
 from diskcleaner.gui.theme import LIGHT
-from diskcleaner.gui.typo import body_md, group, rem, set_global_scale
+from diskcleaner.gui.typo import body_md, group, rem
 
 from . import styles
 
@@ -89,8 +89,6 @@ class DuplicateGroupBox(QWidget):
             item.refresh_fonts()
 
     def update_responsive_size(self, container_width: int):
-        set_global_scale(container_width)
-
         padding = rem(styles.PADDING_REM)
         self.layout().setContentsMargins(padding, padding, padding, padding)
         self.layout().setSpacing(rem(styles.HEADER_GAP_REM))
