@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # 디자인 토큰
 from PySide6.QtGui import QFont
 
@@ -9,10 +11,6 @@ SCALE_MIN = 0.6
 SCALE_MAX = 1.5
 
 MIN_FONT_PT = 6
-
-# rem 단위계: 1rem = 16px (CSS와 동일한 기준), 창 너비 배율(_current_scale)만큼 곱해서
-# 반환하므로 폰트 크기뿐 아니라 레이아웃 치수(너비/높이/여백/radius 등)도 같은 배율로
-# 함께 반응형으로 움직인다.
 REM_PX = 16
 
 _LETTER_SPACING = {
@@ -41,8 +39,6 @@ def get_global_scale() -> float:
 
 
 def rem(value: float, min_px: int = 1, scale: float | None = None) -> int:
-    """rem 값(1rem=16px)을 실제 픽셀로 변환. scale을 넘기지 않으면 전역 스케일을 쓰고,
-    특정 값을 창 크기와 무관하게 고정하고 싶을 때는 scale=1.0을 넘기면 된다."""
     effective_scale = _current_scale if scale is None else scale
     return max(min_px, round(value * REM_PX * effective_scale))
 
@@ -87,7 +83,7 @@ def headline() -> QFont:
     return get_font(FontFamily.PLAY_REGULAR, 20, role="headline")
 
 
-# 홈 화면 - 검사 대상 경로를 굵게 인용부호로 보여줄 때 (목업 "C://user/mings")
+# 홈 화면 - 검사 대상 경로를 굵게 인용부호로 보여줄 때
 def path_quote() -> QFont:
     return get_font(FontFamily.PLAY_BOLD, 13, role="path_quote")
 

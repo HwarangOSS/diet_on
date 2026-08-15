@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from PySide6.QtCore import QByteArray, QRectF, Qt
@@ -7,10 +9,6 @@ from PySide6.QtSvg import QSvgRenderer
 ICON_SIZE = 140
 
 SVG_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "svgs")
-
-# file1.svg와 file2.svg는 원본 비율이 서로 달라(277:230 vs 304:234), 각자 비율대로
-# 맞추면 로딩 중 아이콘이 번갈아 바뀔 때마다 크기가 미묘하게 커졌다 작아졌다 함.
-# 두 아이콘 모두 이 기준 비율 하나로 맞춰서 항상 같은 크기로 보이게 함.
 _REFERENCE_ASPECT_FILE = "file2.svg"
 _reference_aspect: float | None = None
 
