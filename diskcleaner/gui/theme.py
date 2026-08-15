@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Palette:
+    """라이트/다크 테마 하나의 색상 세트."""
+
     bg: str  # 배경
     surface: str  # 모달
     border: str  # 기본 구분선
@@ -135,6 +137,9 @@ QLabel#loadingTitle {{
 QLabel#loadingMessage {{
     color: {p.text_secondary};
 }}
+QLabel#loadingPathLabel {{
+    color: {p.text_tertiary};
+}}
 
 QFrame#card {{
     background-color: {p.surface};
@@ -158,9 +163,21 @@ QLabel#resultGbLabel {{
 QLabel#resultHeading {{
     color: {"#FFFFFF" if dark else p.text_primary};
 }}
+QLabel#resultPathLabel {{
+    color: {p.text_tertiary};
+}}
 
 QLabel#detailTitle {{
     color: {"#FFFFFF" if dark else p.text_primary};
+}}
+QLabel#detailBackLabel {{
+    color: {p.primary};
+}}
+QLabel#deleteGroupTitle {{
+    color: {p.text_secondary};
+}}
+QCheckBox#deleteGroupCheckbox {{
+    color: {p.primary};
 }}
 
 QScrollBar:vertical {{

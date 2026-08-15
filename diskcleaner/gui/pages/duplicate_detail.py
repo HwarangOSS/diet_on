@@ -3,14 +3,17 @@ from PySide6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.duplicate_group import DuplicateGroupBox
-from diskcleaner.gui.typo import headline_small
+from diskcleaner.gui.typo import body_mini, headline_small
 
 BUTTON_TEXT_DEFAULT = "그룹당 1개 남기고 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
 
 class DuplicatePage(QWidget):
+    """중복 파일 상세 화면 - 그룹별로 원본 제외 사본을 기본 선택해 보여줌."""
+
     delete_requested = Signal(list)
+    back_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -23,6 +26,13 @@ class DuplicatePage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(16)
+
+        self.back_label = QLabel("‹ 뒤로")
+        self.back_label.setObjectName("detailBackLabel")
+        self.back_label.setFont(body_mini())
+        self.back_label.setCursor(Qt.PointingHandCursor)
+        self.back_label.mousePressEvent = lambda _event: self.back_requested.emit()
+        layout.addWidget(self.back_label, alignment=Qt.AlignLeft)
 
         self.title_label = QLabel("Duplicate")
         self.title_label.setObjectName("detailTitle")
@@ -82,6 +92,7 @@ class DuplicatePage(QWidget):
         self.action_button.update_responsive_size(container_width)
 
     def refresh_fonts(self):
+        self.back_label.setFont(body_mini())
         self.title_label.setFont(headline_small())
 
     def resizeEvent(self, event):

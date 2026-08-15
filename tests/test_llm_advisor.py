@@ -31,12 +31,14 @@ def test_valid_response_passes_through():
                 "file_id": "b1:f_0",
                 "recommend_delete": True,
                 "reason": "temp file",
+                "category": "설치 잔여물",
                 "confidence": 0.9,
             },
             {
                 "file_id": "b1:f_1",
                 "recommend_delete": False,
                 "reason": "unknown",
+                "category": "기타",
                 "confidence": 0.3,
             },
         ],
@@ -44,6 +46,7 @@ def test_valid_response_passes_through():
     result = validate_batch_response(_request(), response)
     assert result["b1:f_0"]["valid"] is True
     assert result["b1:f_0"]["recommend_delete"] is True
+    assert result["b1:f_0"]["category"] == "설치 잔여물"
     assert result["b1:f_1"]["recommend_delete"] is False
 
 
@@ -63,7 +66,12 @@ def test_missing_file_id_falls_back_to_needs_review():
     response = {
         "batch_id": "b1",
         "results": [
-            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "temp file"},
+            {
+                "file_id": "b1:f_0",
+                "recommend_delete": True,
+                "reason": "temp file",
+                "category": "기타",
+            },
         ],
     }
     result = validate_batch_response(_request(), response)
@@ -104,7 +112,13 @@ def test_bool_confidence_rejected():
     response = {
         "batch_id": "b1",
         "results": [
-            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x", "confidence": True},
+            {
+                "file_id": "b1:f_0",
+                "recommend_delete": True,
+                "reason": "x",
+                "category": "기타",
+                "confidence": True,
+            },
         ],
     }
     result = validate_batch_response(_request(), response)
@@ -122,6 +136,7 @@ def test_out_of_range_confidence_rejected():
                     "file_id": "b1:f_0",
                     "recommend_delete": True,
                     "reason": "x",
+                    "category": "기타",
                     "confidence": bad_confidence,
                 },
             ],
@@ -132,12 +147,42 @@ def test_out_of_range_confidence_rejected():
         assert "confidence 값" in result["b1:f_0"]["reason"]
 
 
-def test_unknown_file_id_in_response_is_ignored():
+def test_missing_category_rejected():
     response = {
         "batch_id": "b1",
         "results": [
             {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x"},
-            {"file_id": "b1:f_99", "recommend_delete": True, "reason": "ghost"},
+        ],
+    }
+    result = validate_batch_response(_request(), response)
+    assert result["b1:f_0"]["valid"] is False
+    assert result["b1:f_0"]["category"] == "확인 필요"
+    assert "category" in result["b1:f_0"]["reason"]
+
+
+def test_unknown_category_rejected():
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {
+                "file_id": "b1:f_0",
+                "recommend_delete": True,
+                "reason": "x",
+                "category": "존재하지 않는 카테고리",
+            },
+        ],
+    }
+    result = validate_batch_response(_request(), response)
+    assert result["b1:f_0"]["valid"] is False
+    assert "category" in result["b1:f_0"]["reason"]
+
+
+def test_unknown_file_id_in_response_is_ignored():
+    response = {
+        "batch_id": "b1",
+        "results": [
+            {"file_id": "b1:f_0", "recommend_delete": True, "reason": "x", "category": "기타"},
+            {"file_id": "b1:f_99", "recommend_delete": True, "reason": "ghost", "category": "기타"},
         ],
     }
     result = validate_batch_response(_request(), response)
