@@ -180,10 +180,6 @@ QLabel#detailBackLabel {{
 QLabel#deleteGroupTitle {{
     color: {p.text_secondary};
 }}
-QCheckBox#deleteGroupCheckbox {{
-    color: {p.primary};
-}}
-
 QScrollBar:vertical {{
     background: transparent;
     width: 10px;

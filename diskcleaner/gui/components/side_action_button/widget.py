@@ -1,5 +1,5 @@
 from PySide6.QtCore import Property, QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
 from diskcleaner.gui.theme import LIGHT
@@ -9,8 +9,6 @@ from . import styles
 
 
 class SideActionButton(QWidget):
-    """화면 왼쪽 밖에서 오른쪽으로 볼록 튀어나온 원형 버튼 (뒤로가기용)."""
-
     clicked = Signal()
 
     def __init__(self, parent=None):
@@ -25,12 +23,17 @@ class SideActionButton(QWidget):
         self._pressed = False
         self._text = ""
         self._scale = 1.0
+        self._design_scale = None
+        self._visible_w = rem(styles.VISIBLE_WIDTH_REM)
+        self._diameter = rem(styles.DIAMETER_REM)
+        self._pad_x = 0
+        self._pad_y = 0
 
         self._scale_anim = QPropertyAnimation(self, b"scale")
         self._scale_anim.setDuration(styles.ANIM_DURATION_MS)
         self._scale_anim.setEasingCurve(QEasingCurve.OutCubic)
 
-        self.setFixedSize(rem(styles.VISIBLE_WIDTH_REM), rem(styles.DIAMETER_REM))
+        self._apply_size()
 
     def _get_scale(self):
         return self._scale
@@ -50,8 +53,17 @@ class SideActionButton(QWidget):
         self._is_dark = dark
         self.update()
 
-    def update_responsive_size(self, container_height: int):
-        self.setFixedSize(rem(styles.VISIBLE_WIDTH_REM), rem(styles.DIAMETER_REM))
+    def update_responsive_size(self, container_height: int, scale: float | None = None):
+        self._design_scale = scale
+        self._visible_w = rem(styles.VISIBLE_WIDTH_REM, scale=scale)
+        self._diameter = rem(styles.DIAMETER_REM, scale=scale)
+        self._apply_size()
+
+    def _apply_size(self):
+        grow = styles.HOVER_SCALE - 1.0
+        self._pad_x = max(2, round(self._visible_w * grow) + 2)
+        self._pad_y = max(2, round((self._diameter / 2) * grow) + 2)
+        self.setFixedSize(self._visible_w + self._pad_x, self._diameter + 2 * self._pad_y)
 
     # 이벤트
     def enterEvent(self, event):
@@ -109,9 +121,9 @@ class SideActionButton(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w, h = self.width(), self.height()
-        diameter = max(w, h)
+        diameter = self._diameter
+        visible_right = w - self._pad_x
 
-        # 호버 애니메이션 - 왼쪽 바깥(화면 밖) 쪽을 기준점으로 살짝 커짐
         painter.save()
         pivot = QPointF(0, h / 2)
         painter.translate(pivot)
@@ -122,26 +134,25 @@ class SideActionButton(QWidget):
         clip.addRect(QRectF(0, 0, w, h))
         painter.setClipPath(clip)
 
-        circle_rect = QRectF(w - diameter, (h - diameter) / 2, diameter, diameter)
+        circle_rect = QRectF(visible_right - diameter, (h - diameter) / 2, diameter, diameter)
         dome = QPainterPath()
         dome.addEllipse(circle_rect)
         painter.fillPath(dome, self._background_color())
-        layers = 6
-        max_width = rem(styles.GLOW_SPREAD_REM) * 2
-        for i in range(layers):
-            t = i / (layers - 1)
-            pen_width = max(1, round(max_width * (1 - t)))
-            alpha = int(styles.GLOW_ALPHA * (1 - t))
-            pen = QPen(QColor(255, 255, 255, alpha))
-            pen.setWidthF(pen_width)
-            painter.setPen(pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(dome)
+
+        center = circle_rect.center()
+        radius = diameter / 2
+        gradient = QRadialGradient(center, radius)
+        gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
+        gradient.setColorAt(styles.GLOW_INNER_STOP, QColor(255, 255, 255, 0))
+        gradient.setColorAt(styles.GLOW_OUTER_STOP, QColor(255, 255, 255, styles.GLOW_ALPHA))
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(gradient))
+        painter.drawPath(dome)
 
         if self._text:
             painter.setPen(QColor("#FFFFFF"))
             painter.setFont(body_mini())
-            text_rect = QRectF(0, 0, w, h)
+            text_rect = QRectF(0, 0, visible_right, h)
             painter.drawText(text_rect, Qt.AlignCenter, self._text)
 
         painter.restore()

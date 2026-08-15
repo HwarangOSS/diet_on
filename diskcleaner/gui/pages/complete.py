@@ -1,40 +1,42 @@
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.loading import icons as loading_icons
+from diskcleaner.gui.components.side_action_button import SideActionButton
 from diskcleaner.gui.typo import body_md, headline, rem
 
-# rem 단위(1rem=16px)
 ICON_SIZE_REM = 120 / 16
 ICON_GAP_REM = 20 / 16
 TITLE_GAP_REM = 8 / 16
 
-# 가정: 목업(Complete.png)에 자동 전환 트리거가 표시되어 있지 않아,
-# 로딩 화면과 비슷하게 일정 시간 뒤 자동으로 다음 화면으로 넘어가도록 구현.
-# 필요 시 AUTO_CONTINUE_MS 값이나 트리거 방식(버튼 클릭 등)을 조정하면 됨.
-AUTO_CONTINUE_MS = 1500
-
 TITLE_TEXT = "Delete Complete!"
+RESULT_BUTTON_TEXT = "Result"
+REFERENCE_WIDTH = 880
 
 
 class CompletePage(QWidget):
-    """실제 삭제 완료 후 결과를 알려주는 화면.
-
-    Delete/Duplicate 상세 화면에서 삭제를 실행하면 재탐색(Loading) 대신
-    이 화면으로 이동해 "삭제가 실제로 처리되었다"는 것을 명확히 보여준다.
-    표시 후 일정 시간이 지나면 continue_requested 시그널을 emit하여
-    호출부가 다음 화면(예: Home)으로 전환하도록 한다.
-    """
-
-    continue_requested = Signal()
+    result_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("completePage")
 
-        self._layout = layout = QVBoxLayout(self)
+        outer = QHBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        self.result_button = SideActionButton()
+        self.result_button.set_text(RESULT_BUTTON_TEXT)
+        self.result_button.clicked.connect(self.result_requested.emit)
+        outer.addWidget(self.result_button, alignment=Qt.AlignVCenter)
+
+        self._layout = layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(0)
+        outer.addLayout(layout, stretch=1)
+
+        self._right_spacer = QWidget()
+        outer.addWidget(self._right_spacer)
 
         self.icon_label = QLabel()
         self.icon_label.setAlignment(Qt.AlignCenter)
@@ -51,21 +53,13 @@ class CompletePage(QWidget):
 
         layout.addSpacing(0)
         self._title_gap = layout.itemAt(layout.count() - 1).spacerItem()
-
-        # 가정: 목업에는 없지만, 몇 개를 지워서 얼마나 확보했는지 보여주는 게
-        # 사용자에게 "진짜로 삭제됐다"는 확신을 주는 데 도움이 될 것 같아 추가.
-        # 불필요하면 이 라벨과 set_result() 호출만 제거하면 됨.
         self.summary_label = QLabel()
         self.summary_label.setObjectName("completeSummary")
         self.summary_label.setFont(body_md())
         self.summary_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.summary_label)
 
-        self._timer = QTimer(self)
-        self._timer.setSingleShot(True)
-        self._timer.timeout.connect(self.continue_requested.emit)
-
-        self._apply_responsive_size()
+        self._apply_responsive_size(REFERENCE_WIDTH)
 
     # API
     def set_result(self, deleted_count: int, size_freed_bytes: int):
@@ -78,17 +72,10 @@ class CompletePage(QWidget):
             size_text = f"{size_freed_bytes / (1024 ** 2):.0f}MB"
         self.summary_label.setText(f"{deleted_count}개 파일 삭제 · {size_text} 확보")
 
-    def start(self, delay_ms: int = AUTO_CONTINUE_MS):
-        self._timer.start(delay_ms)
-
-    def stop(self):
-        self._timer.stop()
-
     def apply_theme(self, dark: bool):
-        # 배경/기본 텍스트 색상은 theme.py의 전역 QSS(QWidget 셀렉터)가 처리한다.
-        pass
+        self.result_button.set_dark(dark)
 
-    def _apply_responsive_size(self):
+    def _apply_responsive_size(self, container_width: int):
         self._icon_gap.changeSize(0, rem(ICON_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._title_gap.changeSize(0, rem(TITLE_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed)
         self._layout.invalidate()
@@ -98,8 +85,12 @@ class CompletePage(QWidget):
             self.icon_label.setFixedSize(icon_size, icon_size)
             self.icon_label.setPixmap(loading_icons.make_file1_icon(size=icon_size))
 
+        scale = container_width / REFERENCE_WIDTH
+        self.result_button.update_responsive_size(self.height(), scale=scale)
+        self._right_spacer.setFixedWidth(self.result_button.width())
+
     def update_responsive_size(self, container_width: int):
-        self._apply_responsive_size()
+        self._apply_responsive_size(container_width)
 
     def refresh_fonts(self):
         self.title_label.setFont(headline())

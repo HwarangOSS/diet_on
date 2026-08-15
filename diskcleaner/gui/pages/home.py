@@ -7,20 +7,19 @@ from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton, QSizePolicy, QVB
 
 from diskcleaner.gui.components.power_button import PowerButton
 from diskcleaner.gui.theme import palette_for
-from diskcleaner.gui.typo import body_md, headline, path_quote, rem
+from diskcleaner.gui.typo import body_md, body_mini, headline, path_quote, rem
 
 DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
 
 SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
 
-# rem 단위(1rem=16px)
 POWER_BUTTON_GAP_REM = 20 / 16
 CLICK_GAP_REM = 8 / 16
 SUB_GAP_REM = 8 / 16
 BUTTON_TOP_GAP_REM = 16 / 16
-BUTTON_RADIUS_REM = 18 / 16
-BUTTON_PADDING_V_REM = 10 / 16
-BUTTON_PADDING_H_REM = 28 / 16
+BUTTON_RADIUS_REM = 20 / 16
+BUTTON_PADDING_V_REM = 5 / 16
+BUTTON_PADDING_H_REM = 14 / 16
 
 
 class HomePage(QWidget):
@@ -151,6 +150,4 @@ class HomePage(QWidget):
         self._apply_button_style()
 
     def get_scan_path(self) -> str:
-        """스캔 대상 경로. 기본값은 홈 디렉토리(또는 DIETON_SCAN_PATH)이고,
-        버튼 클릭으로 사용자가 고르면 그 값으로 바뀜."""
         return self.scan_path

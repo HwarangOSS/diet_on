@@ -1,9 +1,9 @@
 from PySide6.QtCore import Property, QEasingCurve, QPointF, QPropertyAnimation, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QRadialGradient
 from PySide6.QtWidgets import QWidget
 
 from diskcleaner.gui.theme import LIGHT
-from diskcleaner.gui.typo import headline_small, rem
+from diskcleaner.gui.typo import FontFamily, get_font, rem
 
 from . import styles
 
@@ -23,12 +23,18 @@ class BottomActionButton(QWidget):
         self._pressed = False
         self._text = ""
         self._scale = 1.0
+        self._design_scale = None
+        self._text_size = 16
+        self._visible_w = rem(styles.WIDTH_REM)
+        self._visible_h = rem(styles.HEIGHT_REM)
+        self._pad_x = 0
+        self._pad_top = 0
 
         self._scale_anim = QPropertyAnimation(self, b"scale")
         self._scale_anim.setDuration(styles.ANIM_DURATION_MS)
         self._scale_anim.setEasingCurve(QEasingCurve.OutCubic)
 
-        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
+        self._apply_size()
 
     def _get_scale(self):
         return self._scale
@@ -48,8 +54,24 @@ class BottomActionButton(QWidget):
         self._is_dark = dark
         self.update()
 
-    def update_responsive_size(self, container_width: int):
-        self.setFixedSize(container_width, rem(styles.HEIGHT_REM))
+    def update_responsive_size(
+        self,
+        container_width: int,
+        scale: float | None = None,
+        height_scale: float = 1.0,
+        text_size: int = 16,
+    ):
+        self._design_scale = scale
+        self._text_size = text_size
+        self._visible_w = container_width
+        self._visible_h = max(1, round(rem(styles.HEIGHT_REM, scale=scale) * height_scale))
+        self._apply_size()
+
+    def _apply_size(self):
+        grow = styles.HOVER_SCALE - 1.0
+        self._pad_x = max(2, round((self._visible_w / 2) * grow) + 2)
+        self._pad_top = max(2, round(self._visible_h * grow) + 2)
+        self.setFixedSize(self._visible_w + 2 * self._pad_x, self._visible_h + self._pad_top)
 
     # 이벤트
     def enterEvent(self, event):
@@ -107,10 +129,12 @@ class BottomActionButton(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w, h = self.width(), self.height()
+        vw, vh = self._visible_w, self._visible_h
+        pad_x, pad_top = self._pad_x, self._pad_top
+        visible_rect = QRectF(pad_x, pad_top, vw, vh)
 
-        # 호버 애니메이션
         painter.save()
-        pivot = QPointF(w / 2, h)
+        pivot = QPointF(pad_x + vw / 2, pad_top + vh)
         painter.translate(pivot)
         painter.scale(self._scale, self._scale)
         painter.translate(-pivot)
@@ -120,25 +144,33 @@ class BottomActionButton(QWidget):
         painter.setClipPath(clip)
 
         dome = QPainterPath()
-        dome.addEllipse(QRectF(0, 0, w, h * 2))
+        dome.addEllipse(QRectF(pad_x, pad_top, vw, vh * 2))
         painter.fillPath(dome, self._background_color())
-        layers = 6
-        max_width = rem(styles.GLOW_SPREAD_REM) * 2
-        for i in range(layers):
-            t = i / (layers - 1)
-            pen_width = max(1, round(max_width * (1 - t)))
-            alpha = int(styles.GLOW_ALPHA * (1 - t))
-            pen = QPen(QColor(255, 255, 255, alpha))
-            pen.setWidthF(pen_width)
-            painter.setPen(pen)
-            painter.setBrush(Qt.NoBrush)
-            painter.drawPath(dome)
+
+        rx, ry = max(vw / 2, 1), max(vh, 1)
+        painter.save()
+        painter.translate(pivot)
+        painter.scale(rx, ry)
+        gradient = QRadialGradient(QPointF(0, 0), 1.0)
+        gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
+        gradient.setColorAt(styles.GLOW_INNER_STOP, QColor(255, 255, 255, 0))
+        gradient.setColorAt(styles.GLOW_OUTER_STOP, QColor(255, 255, 255, styles.GLOW_ALPHA))
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QBrush(gradient))
+        painter.drawEllipse(QPointF(0, 0), 1.0, 1.0)
+        painter.restore()
 
         if self._text:
             painter.setPen(QColor("#FFFFFF"))
-            painter.setFont(headline_small())
-            text_rect = QRectF(0, 0, w, h * 0.6)
-            painter.drawText(text_rect, Qt.AlignHCenter | Qt.AlignTop, self._text)
+            painter.setFont(
+                get_font(
+                    FontFamily.PLAY_REGULAR,
+                    self._text_size,
+                    role="headline_small",
+                    scale=self._design_scale,
+                )
+            )
+            painter.drawText(visible_rect, Qt.AlignCenter, self._text)
 
         painter.restore()
         painter.end()

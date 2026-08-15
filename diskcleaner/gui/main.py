@@ -16,6 +16,7 @@ from diskcleaner.gui.pages.home import HomePage
 from diskcleaner.gui.pages.loading import LoadingPage
 from diskcleaner.gui.pages.result import CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
 from diskcleaner.gui.result_mapping import (
+    remove_deleted_paths,
     report_to_delete_files,
     report_to_duplicate_groups,
     report_to_results,
@@ -105,7 +106,7 @@ def main():
         if state["progress_value"] < PROGRESS_TICK_CAP:
             state["progress_value"] += PROGRESS_TICK_STEP
             loading.update_progress(state["progress_value"])
-            print(f"[진행] {state['progress_value']}% (스캔 백그라운드 진행 중)")
+            print(f"{state['progress_value']}% (스캔 백그라운드 진행 중)")
 
     def on_analysis_finished(report, plan):
         _stop_progress_timer()
@@ -118,13 +119,13 @@ def main():
         result.set_path(state["scan_path"])
         result.set_results(report_to_results(report, plan))
         stack.setCurrentWidget(result)
-        print("[DEBUG] 분석 완료 → 결과 페이지로 전환")
+        print("분석 완료 → 결과 페이지로 전환")
 
     def on_analysis_error(message: str):
         _stop_progress_timer()
         _wait_for_thread()
         loading.stop()
-        print(f"[ERROR] 분석 실패: {message}")
+        print(f"[ERROR]: {message}")
         stack.setCurrentWidget(home)
 
     def go_to_loading():
@@ -134,7 +135,7 @@ def main():
         state["scan_path"] = scan_path
         loading.set_path(scan_path)
         loading.start()
-        print(f"[DEBUG] 스캔 요청됨! 대상: {scan_path}")
+        print(f"스캔 요청됨! 대상: {scan_path}")
 
         thread, worker = start_analysis(scan_path)
         bridge = _AnalysisBridge(on_analysis_finished, on_analysis_error)
@@ -165,12 +166,14 @@ def main():
             stack.setCurrentWidget(duplicate_detail)
 
     def go_to_complete(result_):
-        # 실제 삭제(deletion_manager.delete)가 끝난 뒤 재탐색(go_to_loading) 대신
-        # 이 화면으로 이동해 "정말로 삭제됐다"는 걸 바로 보여준다.
         complete.set_result(result_.total_deleted, result_.total_size_freed)
         complete.update_responsive_size(window.width())
         stack.setCurrentWidget(complete)
-        complete.start()
+
+    def _refresh_after_deletion(result_):
+        deleted_paths = {str(p) for p in result_.success}
+        remove_deleted_paths(state["report"], state["plan"], deleted_paths)
+        result.set_results(report_to_results(state["report"], state["plan"]))
 
     def on_delete_target_delete_requested(selected_paths):
         plan = state["plan"]
@@ -181,6 +184,7 @@ def main():
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
+        _refresh_after_deletion(result_)
         go_to_complete(result_)
 
     def on_duplicate_delete_requested(selected_paths):
@@ -191,14 +195,11 @@ def main():
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
+        _refresh_after_deletion(result_)
         go_to_complete(result_)
 
-    def on_complete_continue():
-        # 가정: 삭제 완료 후에는 방금 지운 파일이 반영된 최신 상태가 아니므로
-        # (Result/Delete/Duplicate 화면의 이전 스캔 결과는 낡은 데이터),
-        # 다시 스캔하지 않고 Home으로 돌아가 사용자가 원할 때 재검사하도록 함.
-        complete.stop()
-        stack.setCurrentWidget(home)
+    def on_complete_result_requested():
+        stack.setCurrentWidget(result)
 
     home.scan_requested.connect(go_to_loading)
     result.card_clicked.connect(go_to_detail)
@@ -206,7 +207,7 @@ def main():
     duplicate_detail.delete_requested.connect(on_duplicate_delete_requested)
     delete_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
     duplicate_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
-    complete.continue_requested.connect(on_complete_continue)
+    complete.result_requested.connect(on_complete_result_requested)
 
     is_dark = load_dark_mode()
 

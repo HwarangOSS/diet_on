@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtCore import QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.theme import DARK, LIGHT
-from diskcleaner.gui.typo import body_md, body_mini, hashtag, naming, rem
+from diskcleaner.gui.typo import FontFamily, get_font
 
 from . import styles
 
@@ -16,8 +16,19 @@ def _with_alpha(hex_color: str, alpha: int) -> QColor:
     return color
 
 
+def _name_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_MEDIUM, 11, role="naming", scale=scale)
+
+
+def _path_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_REGULAR, 8, role="body_md", scale=scale)
+
+
+def _size_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_REGULAR, 7, role="body_mini", scale=scale)
+
+
 class FileListItem(QWidget):
-    """삭제 후보 파일 한 개 행 - 이름/경로/용량/사유 표시와 클릭 선택 토글."""
 
     toggled = Signal(bool)
 
@@ -26,59 +37,44 @@ class FileListItem(QWidget):
         self.setObjectName("fileListItem")
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setCursor(Qt.PointingHandCursor)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         self._is_dark = False
         self._is_selected = True
         self._press_inside = False
         self._reason = ""
+        self._name = ""
+        self._path = ""
+        self._scale = 1.0
 
         layout = QVBoxLayout(self)
-        padding_h = rem(styles.PADDING_H_REM)
-        padding_v = rem(styles.PADDING_V_REM)
-        layout.setContentsMargins(padding_h, padding_v, padding_h, padding_v)
-        layout.setSpacing(rem(styles.ROW_GAP_REM))
 
         self._top_row = top_row = QHBoxLayout()
-        top_row.setSpacing(rem(styles.TOP_ROW_GAP_REM))
 
         self.name_label = QLabel()
         self.name_label.setObjectName("fileItemName")
-        self.name_label.setFont(naming())
         top_row.addWidget(self.name_label)
         top_row.addStretch()
 
         self.size_label = QLabel()
         self.size_label.setObjectName("fileItemSize")
-        self.size_label.setFont(body_mini())
         top_row.addWidget(self.size_label, alignment=Qt.AlignTop)
 
         layout.addLayout(top_row)
 
         self.path_label = QLabel()
         self.path_label.setObjectName("fileItemPath")
-        self.path_label.setFont(body_md())
         layout.addWidget(self.path_label)
-
-        self.reason_label = QLabel()
-        self.reason_label.setObjectName("fileItemReason")
-        self.reason_label.setFont(body_mini())
-        self.reason_label.hide()
-        layout.addWidget(self.reason_label)
 
         layout.addStretch()
 
-        bottom_row = QHBoxLayout()
-        bottom_row.addStretch()
+        self.reason_label = QLabel()
+        self.reason_label.setObjectName("fileItemReason")
+        self.reason_label.hide()
+        layout.addWidget(self.reason_label)
 
-        self.hashtag_label = QLabel()
-        self.hashtag_label.setObjectName("fileItemHashtag")
-        self.hashtag_label.setFont(hashtag())
-        bottom_row.addWidget(self.hashtag_label)
-
-        layout.addLayout(bottom_row)
-
-        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
         self._refresh_style()
+        self.update_responsive_size(styles.REFERENCE_WIDTH)
 
     # API
     def set_file(
@@ -86,20 +82,13 @@ class FileListItem(QWidget):
         name: str,
         path: str,
         size_bytes: int,
-        hashtags: list[str] | None = None,
         reason: str | None = None,
     ):
-        self.name_label.setText(name)
-        self.path_label.setText(path)
+        self._name = name
+        self._path = path
+        self._refresh_name_text()
+        self._refresh_path_text()
         self.size_label.setText(styles.format_file_size(size_bytes))
-
-        tags = hashtags or []
-        if tags:
-            self.hashtag_label.setText(" ".join(t if t.startswith("#") else f"#{t}" for t in tags))
-            self.hashtag_label.show()
-        else:
-            self.hashtag_label.setText("")
-            self.hashtag_label.hide()
 
         self._reason = reason or ""
         if self._reason:
@@ -111,26 +100,49 @@ class FileListItem(QWidget):
             self.reason_label.setText("")
             self.reason_label.hide()
 
+    def _refresh_name_text(self):
+        if not self._name:
+            return
+        metrics = QFontMetrics(self.name_label.font())
+        padding_h = round(styles.REF_PADDING_H * self._scale)
+        top_row_gap = round(styles.REF_TOP_ROW_GAP * self._scale)
+        size_width = self.size_label.sizeHint().width()
+        available_width = max(self.width() - 2 * padding_h - size_width - top_row_gap, 0)
+        elided = metrics.elidedText(self._name, Qt.ElideMiddle, available_width)
+        self.name_label.setText(elided)
+        self.name_label.setToolTip(self._name)
+        self.name_label.setMaximumWidth(available_width)
+
+    def _refresh_path_text(self):
+        if not self._path:
+            return
+        metrics = QFontMetrics(self.path_label.font())
+        padding_h = round(styles.REF_PADDING_H * self._scale)
+        available_width = max(self.width() - 2 * padding_h, 0)
+        elided = metrics.elidedText(self._path, Qt.ElideMiddle, available_width)
+        self.path_label.setText(elided)
+        self.path_label.setToolTip(self._path)
+        self.path_label.setMaximumWidth(available_width)
+
     def _refresh_reason_text(self):
         if not self._reason:
             return
         metrics = QFontMetrics(self.reason_label.font())
-        available_width = self.width() - 2 * rem(styles.PADDING_H_REM)
+        padding_h = round(styles.REF_PADDING_H * self._scale)
+        available_width = self.width() - 2 * padding_h
         elided = metrics.elidedText(
             f"AI 사유: {self._reason}", Qt.ElideRight, max(available_width, 0)
         )
         self.reason_label.setText(elided)
 
-    def set_hashtag_visible(self, visible: bool):
-        self.hashtag_label.setVisible(visible)
+    def minimumSizeHint(self):
+        return QSize(1, self.height())
+
+    def sizeHint(self):
+        return QSize(styles.REF_HEIGHT * 3, self.height())
 
     def refresh_fonts(self):
-        self.name_label.setFont(naming())
-        self.path_label.setFont(body_md())
-        self.size_label.setFont(body_mini())
-        self.hashtag_label.setFont(hashtag())
-        self.reason_label.setFont(body_mini())
-        self._refresh_reason_text()
+        self.update_responsive_size(self.width() or styles.REFERENCE_WIDTH)
 
     def is_selected(self) -> bool:
         return self._is_selected
@@ -150,17 +162,33 @@ class FileListItem(QWidget):
         self.update()
 
     def update_responsive_size(self, container_width: int):
-        self.setFixedSize(rem(styles.WIDTH_REM), rem(styles.HEIGHT_REM))
+        scale = container_width / styles.REFERENCE_WIDTH
+        self._scale = scale
 
-        h_margin = rem(styles.PADDING_H_REM)
-        v_margin = rem(styles.PADDING_V_REM)
+        self.name_label.setFont(_name_font(scale))
+        self.path_label.setFont(_path_font(scale))
+        self.size_label.setFont(_size_font(scale))
+        self.reason_label.setFont(_size_font(scale))
+
+        self.setFixedHeight(max(1, round(styles.REF_HEIGHT * scale)))
+
+        h_margin = round(styles.REF_PADDING_H * scale)
+        v_margin = round(styles.REF_PADDING_V * scale)
         self.layout().setContentsMargins(h_margin, v_margin, h_margin, v_margin)
-        self.layout().setSpacing(rem(styles.ROW_GAP_REM))
-        self._top_row.setSpacing(rem(styles.TOP_ROW_GAP_REM))
+        self.layout().setSpacing(round(styles.REF_ROW_GAP * scale))
+        self._top_row.setSpacing(round(styles.REF_TOP_ROW_GAP * scale))
+        self._refresh_name_text()
+        self._refresh_path_text()
         self._refresh_reason_text()
         self.update()
 
     # 이벤트
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._refresh_name_text()
+        self._refresh_path_text()
+        self._refresh_reason_text()
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._press_inside = True
@@ -191,8 +219,7 @@ class FileListItem(QWidget):
         color = self._text_color()
         reason_color = self._reason_color()
         self.setStyleSheet(
-            "QLabel#fileItemName, QLabel#fileItemPath, "
-            "QLabel#fileItemHashtag, QLabel#fileItemSize {"
+            "QLabel#fileItemName, QLabel#fileItemPath, QLabel#fileItemSize {"
             f" color: {color}; background: transparent; }}"
             "QLabel#fileItemReason {"
             f" color: {reason_color}; background: transparent; }}"
@@ -203,7 +230,7 @@ class FileListItem(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         w, h = self.width(), self.height()
-        radius = rem(styles.CORNER_RADIUS_REM)
+        radius = round(styles.REF_CORNER_RADIUS * self._scale)
 
         path = QPainterPath()
         path.addRoundedRect(QRectF(0, 0, w, h), radius, radius)
@@ -213,7 +240,7 @@ class FileListItem(QWidget):
 
         glow = QColor(styles.SELECT_SHADOW_COLOR)
         layers = 5
-        max_width = rem(styles.GLOW_SPREAD_REM) * 2
+        max_width = round(styles.REF_GLOW_SPREAD * self._scale) * 2
         for i in range(layers):
             t = i / (layers - 1)
             pen_width = max(1, round(max_width * (1 - t)))

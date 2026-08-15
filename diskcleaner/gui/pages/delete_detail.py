@@ -1,6 +1,5 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QCheckBox,
     QHBoxLayout,
     QLabel,
     QScrollArea,
@@ -11,28 +10,42 @@ from PySide6.QtWidgets import (
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.file_list_item import FileListItem
 from diskcleaner.gui.components.side_action_button import SideActionButton
-from diskcleaner.gui.result_mapping import SAFE_CATEGORY_LABEL
-from diskcleaner.gui.typo import body_mini, headline_small, rem
+from diskcleaner.gui.components.tri_state_checkbox import TriStateCheckBox
+from diskcleaner.gui.theme import palette_for
+from diskcleaner.gui.typo import FontFamily, get_font
 
 BUTTON_TEXT_DEFAULT = "전체 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
 BACK_BUTTON_TEXT = "Back"
 SELECT_ALL_TEXT = "전체 선택"
+REFERENCE_WIDTH = 880
 
-CHEVRON_EXPANDED = "▼"
-CHEVRON_COLLAPSED = "▶"
+REF_MARGIN = 130
+REF_MARGIN_TOP = 40
+REF_MARGIN_BOTTOM = 0
+REF_PAGE_GAP = 16
+REF_LIST_GAP = 12
+REF_SELECT_ALL_GAP = 8
 
-# rem 단위(1rem=16px)
-PAGE_MARGIN_REM = 20 / 16
-PAGE_GAP_REM = 16 / 16
-LIST_GAP_REM = 12 / 16
-HEADER_MARGIN_H_REM = 4 / 16
-SELECT_ALL_GAP_REM = 8 / 16
+ACTION_BUTTON_HEIGHT_SCALE = 0.55
+ACTION_BUTTON_WIDTH_SCALE = 0.8
+ACTION_BUTTON_TEXT_SIZE = 11
+
+
+def _design_scale(container_width: int) -> float:
+    return container_width / REFERENCE_WIDTH
+
+
+def _title_font(scale: float):
+    return get_font(FontFamily.PLAY_REGULAR, 22, role="headline_small", scale=scale)
+
+
+def _label_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_REGULAR, 7, role="body_mini", scale=scale)
 
 
 class DeletePage(QWidget):
-    """삭제 후보 상세 화면 - 카테고리별로 묶어서 보여주고 그룹/개별 선택 지원."""
 
     delete_requested = Signal(list)
     back_requested = Signal()
@@ -43,8 +56,6 @@ class DeletePage(QWidget):
 
         self._items: list[FileListItem] = []
         self._files: list[dict] = []
-        self._group_headers: list[QWidget] = []
-        self._group_sections: dict[str, dict] = {}
         self._is_dark = False
 
         outer = QHBoxLayout(self)
@@ -58,20 +69,18 @@ class DeletePage(QWidget):
 
         self._layout = layout = QVBoxLayout()
         outer.addLayout(layout, stretch=1)
+        self._right_spacer = QWidget()
+        outer.addWidget(self._right_spacer)
 
         self.title_label = QLabel("Delete")
         self.title_label.setObjectName("detailTitle")
-        self.title_label.setFont(headline_small())
         self.title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title_label)
 
         select_all_row = QHBoxLayout()
         select_all_row.addStretch()
-        self.select_all_checkbox = QCheckBox(SELECT_ALL_TEXT)
+        self.select_all_checkbox = TriStateCheckBox(SELECT_ALL_TEXT)
         self.select_all_checkbox.setObjectName("deleteSelectAllCheckbox")
-        self.select_all_checkbox.setFont(body_mini())
-        self.select_all_checkbox.setTristate(True)
-        self.select_all_checkbox.setCursor(Qt.PointingHandCursor)
         self.select_all_checkbox.clicked.connect(self._toggle_select_all)
         select_all_row.addWidget(self.select_all_checkbox)
         layout.addLayout(select_all_row)
@@ -82,6 +91,7 @@ class DeletePage(QWidget):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QScrollArea.NoFrame)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.list_container = QWidget()
         self.list_container.setObjectName("deleteListContainer")
@@ -97,7 +107,7 @@ class DeletePage(QWidget):
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
 
-        self._apply_responsive_size()
+        self.update_responsive_size(REFERENCE_WIDTH)
 
     # API
     def set_files(self, files: list[dict]):
@@ -106,52 +116,21 @@ class DeletePage(QWidget):
             item.setParent(None)
             item.deleteLater()
         self._items.clear()
-        for header in self._group_headers:
-            self.list_layout.removeWidget(header)
-            header.setParent(None)
-            header.deleteLater()
-        self._group_headers.clear()
-        self._group_sections.clear()
-        self._files = []
+        self._files = list(files)
 
-        groups: dict[str, list[dict]] = {}
+        insert_at = self.list_layout.count() - 1  
         for f in files:
-            groups.setdefault(f.get("category") or SAFE_CATEGORY_LABEL, []).append(f)
-
-        insert_at = self.list_layout.count() - 1  # 맨 끝 stretch 앞에 계속 끼워넣음
-        for category, group_files in groups.items():
-            header, title_label, checkbox = self._make_group_header(category, len(group_files))
-            self.list_layout.insertWidget(insert_at, header)
+            item = FileListItem()
+            item.set_file(f["name"], f["path"], f["size_bytes"], f.get("reason"))
+            item.set_selected(True, emit=False) 
+            item.set_dark(self._is_dark)
+            item.toggled.connect(self._on_item_toggled)
+            self.list_layout.insertWidget(insert_at, item)
             insert_at += 1
-            self._group_headers.append(header)
+            self._items.append(item)
 
-            group_items: list[FileListItem] = []
-            for f in group_files:
-                item = FileListItem()
-                item.set_file(
-                    f["name"], f["path"], f["size_bytes"], f.get("hashtags"), f.get("reason")
-                )
-                # 페이지 진입 시에는 카테고리와 무관하게 전부 선택된 상태로 시작.
-                item.set_dark(self._is_dark)
-                item.toggled.connect(self._on_item_toggled)
-                self.list_layout.insertWidget(insert_at, item)
-                insert_at += 1
-                self._items.append(item)
-                group_items.append(item)
-                self._files.append(f)
-
-            self._group_sections[category] = {
-                "items": group_items,
-                "title_label": title_label,
-                "checkbox": checkbox,
-                "base_text": f"{category} ({len(group_files)})",
-                "collapsed": False,
-            }
-            checkbox.clicked.connect(lambda _checked, items=group_items: self._toggle_group(items))
-            header.mousePressEvent = lambda _event, cat=category: self._toggle_collapse(cat)
-
+        self.update_responsive_size(self.width() or REFERENCE_WIDTH)
         self._refresh_button_text()
-        self._refresh_group_checkboxes()
         self._refresh_select_all_checkbox()
 
     def apply_theme(self, dark: bool):
@@ -160,32 +139,39 @@ class DeletePage(QWidget):
             item.set_dark(dark)
         self.action_button.set_dark(dark)
         self.back_button.set_dark(dark)
-
-    def _apply_responsive_size(self):
-        margin = rem(PAGE_MARGIN_REM)
-        self._layout.setContentsMargins(margin, margin, margin, margin)
-        self._layout.setSpacing(rem(PAGE_GAP_REM))
-        self.list_layout.setSpacing(rem(LIST_GAP_REM))
-        self._select_all_row.setContentsMargins(0, 0, 0, rem(SELECT_ALL_GAP_REM) - rem(PAGE_GAP_REM))
-
-        header_margin = rem(HEADER_MARGIN_H_REM)
-        for header in self._group_headers:
-            header.layout().setContentsMargins(header_margin, 0, header_margin, 0)
+        self.select_all_checkbox.set_color(palette_for(dark).primary)
 
     def update_responsive_size(self, container_width: int):
-        self._apply_responsive_size()
+        scale = _design_scale(container_width)
+
+        self.title_label.setFont(_title_font(scale))
+        self.select_all_checkbox.setFont(_label_font(scale))
+        self.select_all_checkbox.set_scale(scale)
+
+        margin = round(REF_MARGIN * scale)
+        margin_top = round(REF_MARGIN_TOP * scale)
+        margin_bottom = round(REF_MARGIN_BOTTOM * scale)
+        self._layout.setContentsMargins(margin, margin_top, margin, margin_bottom)
+        self._layout.setSpacing(round(REF_PAGE_GAP * scale))
+        self.list_layout.setSpacing(round(REF_LIST_GAP * scale))
+        self._select_all_row.setContentsMargins(0, 0, 0, round(REF_SELECT_ALL_GAP * scale))
+
+        back_button_width = self.back_button.width()
+        content_width = max(1, container_width - back_button_width - 2 * margin)
+        self._right_spacer.setFixedWidth(back_button_width)
 
         for item in self._items:
             item.update_responsive_size(container_width)
-        self.action_button.update_responsive_size(container_width)
-        self.back_button.update_responsive_size(self.height())
+        self.action_button.update_responsive_size(
+            round(content_width * ACTION_BUTTON_WIDTH_SCALE),
+            scale=scale,
+            height_scale=ACTION_BUTTON_HEIGHT_SCALE,
+            text_size=ACTION_BUTTON_TEXT_SIZE,
+        )
+        self.back_button.update_responsive_size(self.height(), scale=scale)
 
     def refresh_fonts(self):
-        self.title_label.setFont(headline_small())
-        self.select_all_checkbox.setFont(body_mini())
-        for section in self._group_sections.values():
-            section["title_label"].setFont(body_mini())
-            section["checkbox"].setFont(body_mini())
+        self.update_responsive_size(self.width() or REFERENCE_WIDTH)
         for item in self._items:
             item.refresh_fonts()
 
@@ -194,57 +180,12 @@ class DeletePage(QWidget):
         self.update_responsive_size(self.width())
 
     # 내부
-    def _make_group_header(self, category: str, count: int) -> tuple[QWidget, QLabel, QCheckBox]:
-        header = QWidget()
-        header.setObjectName("deleteGroupHeader")
-        header.setCursor(Qt.PointingHandCursor)
-        row = QHBoxLayout(header)
-        header_margin = rem(HEADER_MARGIN_H_REM)
-        row.setContentsMargins(header_margin, 0, header_margin, 0)
-
-        title = QLabel(f"{CHEVRON_EXPANDED} {category} ({count})")
-        title.setObjectName("deleteGroupTitle")
-        title.setFont(body_mini())
-        row.addWidget(title)
-        row.addStretch()
-
-        checkbox = QCheckBox("전체 선택")
-        checkbox.setObjectName("deleteGroupCheckbox")
-        checkbox.setFont(body_mini())
-        checkbox.setTristate(True)
-        checkbox.setCursor(Qt.PointingHandCursor)
-        row.addWidget(checkbox)
-
-        return header, title, checkbox
-
-    def _toggle_group(self, items: list[FileListItem]):
-        select_all = not all(item.is_selected() for item in items)
-        for item in items:
-            item.set_selected(select_all, emit=False)
-        self._refresh_button_text()
-        self._refresh_group_checkboxes()
-        self._refresh_select_all_checkbox()
-
     def _toggle_select_all(self):
         select_all = not all(item.is_selected() for item in self._items)
         for item in self._items:
             item.set_selected(select_all, emit=False)
         self._refresh_button_text()
-        self._refresh_group_checkboxes()
         self._refresh_select_all_checkbox()
-
-    def _refresh_group_checkboxes(self):
-        for section in self._group_sections.values():
-            states = [item.is_selected() for item in section["items"]]
-            checkbox = section["checkbox"]
-            checkbox.blockSignals(True)
-            if all(states):
-                checkbox.setCheckState(Qt.Checked)
-            elif not any(states):
-                checkbox.setCheckState(Qt.Unchecked)
-            else:
-                checkbox.setCheckState(Qt.PartiallyChecked)
-            checkbox.blockSignals(False)
 
     def _refresh_select_all_checkbox(self):
         states = [item.is_selected() for item in self._items]
@@ -260,18 +201,8 @@ class DeletePage(QWidget):
             checkbox.setCheckState(Qt.PartiallyChecked)
         checkbox.blockSignals(False)
 
-    def _toggle_collapse(self, category: str):
-        section = self._group_sections[category]
-        collapsed = not section["collapsed"]
-        section["collapsed"] = collapsed
-        for item in section["items"]:
-            item.setVisible(not collapsed)
-        chevron = CHEVRON_COLLAPSED if collapsed else CHEVRON_EXPANDED
-        section["title_label"].setText(f"{chevron} {section['base_text']}")
-
     def _on_item_toggled(self, _selected: bool):
         self._refresh_button_text()
-        self._refresh_group_checkboxes()
         self._refresh_select_all_checkbox()
 
     def _refresh_button_text(self):

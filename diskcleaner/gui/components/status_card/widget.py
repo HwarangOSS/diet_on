@@ -9,7 +9,7 @@ from diskcleaner.gui.typo import FontFamily, get_font
 
 from . import icons, styles
 
-REFERENCE_WIDTH = 880  # result.py의 REFERENCE_WIDTH와 반드시 같아야 카드 크기가 일관됨
+REFERENCE_WIDTH = 880 
 
 
 def _message_font(scale: float):
@@ -34,6 +34,7 @@ class StatusCard(QWidget):
         self._status = styles.STATUS_SUCCESS
         self._press_inside = False
         self._scale = 1.0
+        self._clickable = True
 
         self._glow_effect = QGraphicsDropShadowEffect(self)
         self._glow_effect.setOffset(0, 0)
@@ -67,10 +68,12 @@ class StatusCard(QWidget):
         self.message_label.setText(message)
         self.meta_label.setText(f"{count}개 ({styles.format_gb(size_bytes)})")
         self._apply_icon()
+
+        self._clickable = status != styles.STATUS_SUCCESS
+        self.setCursor(Qt.PointingHandCursor if self._clickable else Qt.ArrowCursor)
         self.update()
 
     def refresh_fonts(self):
-        """전역 폰트 스케일 변경 시 카드 내부 라벨도 함께 갱신."""
         self.message_label.setFont(_message_font(self._scale))
         self.meta_label.setFont(_meta_font(self._scale))
 
@@ -113,7 +116,7 @@ class StatusCard(QWidget):
 
     # 이벤트
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self._clickable:
             self._press_inside = True
         super().mousePressEvent(event)
 
@@ -166,8 +169,6 @@ class StatusCard(QWidget):
         max_width = round(styles.REF_GLOW_SPREAD * self._scale) * 2
         for i in range(layers):
             t = i / (layers - 1)
-            # t=0(가장 두꺼운 번짐)은 옅게, t=1(가장 얇은 선)은 또렷하게 그려서
-            # 흐릿한 덩어리가 아니라 얇고 선명한 테두리 + 은은한 번짐으로 보이게 함.
             pen_width = max(1, round(max_width * (1 - t)))
             alpha = int(150 * t)
             pen = QPen(QColor(glow.red(), glow.green(), glow.blue(), alpha))
