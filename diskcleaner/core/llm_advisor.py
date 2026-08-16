@@ -47,7 +47,9 @@ SYSTEM_PROMPT = f"""당신은 PC 디스크 정리 보조 AI입니다. 사용자�
 낮으면 반드시 recommend_delete=false로 응답하세요 (오삭제 방지가 최우선).
 
 각 파일마다 category도 반드시 다음 목록 중 하나로 고르세요 (새 값을 만들지 마세요):
-{", ".join(CATEGORY_OPTIONS)}"""
+{", ".join(CATEGORY_OPTIONS)}
+
+reason은 파일명이 영어여도 반드시 한국어로 작성하세요."""
 
 RESPONSE_SCHEMA = {
     "type": "object",
