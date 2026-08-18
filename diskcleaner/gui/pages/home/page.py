@@ -1,8 +1,8 @@
 import os
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFontMetrics
+from PySide6.QtCore import QRectF, Qt, Signal
+from PySide6.QtGui import QColor, QFontMetrics, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QFileDialog, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.power_button import PowerButton
@@ -14,6 +14,66 @@ from . import styles
 DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
 
 SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
+
+
+class ChangePathButton(QPushButton):
+    """Qt 스타일시트는 inset box-shadow를 지원하지 않아 직접 그려서 구현한 버튼."""
+
+    def __init__(self, text: str, parent=None):
+        super().__init__(text, parent)
+        self._is_dark = False
+
+    def set_dark(self, dark: bool):
+        self._is_dark = dark
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        rect = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
+        radius = rect.height() / 2
+
+        path = QPainterPath()
+        path.addRoundedRect(rect, radius, radius)
+
+        # 다크 모드에서는 PowerButton과 동일하게 palette의 primary 색을 사용
+        p = palette_for(self._is_dark)
+        fill = p.primary_hover if (self.underMouse() or self.isDown()) else p.primary
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor(fill))
+        painter.drawPath(path)
+
+        painter.setClipPath(path)
+        self._paint_inset_glow(painter, rect, radius)
+        painter.setClipping(False)
+
+        painter.setPen(QColor("#FFFFFF"))
+        painter.setFont(self.font())
+        painter.drawText(rect, Qt.AlignCenter, self.text())
+        painter.end()
+
+    def _paint_inset_glow(self, painter: QPainter, rect: QRectF, radius: float):
+        blur_radius = styles.BUTTON_GLOW_BLUR_RADIUS
+        steps = max(1, round(blur_radius))
+        for i in range(steps):
+            inset = i + 0.5
+            alpha = round(styles.BUTTON_GLOW_MAX_ALPHA * (1 - i / steps) ** 2)
+            pen = QPen(QColor(255, 255, 255, alpha))
+            pen.setWidthF(1.4)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)
+            inner_rect = rect.adjusted(inset, inset, -inset, -inset)
+            inner_radius = max(radius - inset, 0.0)
+            painter.drawRoundedRect(inner_rect, inner_radius, inner_radius)
+
+    def enterEvent(self, event):
+        super().enterEvent(event)
+        self.update()
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.update()
 
 
 class HomePage(QWidget):
@@ -64,7 +124,7 @@ class HomePage(QWidget):
         layout.addSpacing(0)
         self._button_top_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
-        self.change_path_button = QPushButton("탐색 파일 변경")
+        self.change_path_button = ChangePathButton("탐색 파일 변경")
         self.change_path_button.setObjectName("changePathButton")
         self.change_path_button.setFont(body_md())
         self.change_path_button.setCursor(Qt.PointingHandCursor)
@@ -90,27 +150,8 @@ class HomePage(QWidget):
         self.path_quote_label.setToolTip(self.scan_path)
 
     def _apply_button_style(self):
-        p = palette_for(self._is_dark)
-        padding_v = rem(styles.BUTTON_PADDING_V_REM)
-        padding_h = rem(styles.BUTTON_PADDING_H_REM)
-        button_height = QFontMetrics(body_md()).height() + padding_v * 2
-        radius = button_height / 2
-        self.change_path_button.setStyleSheet(
-            f"""
-            QPushButton#changePathButton {{
-                background-color: {p.primary};
-                color: #FFFFFF;
-                border: 0px solid transparent;
-                border-radius: {radius}px;
-                padding: {padding_v}px {padding_h}px;
-            }}
-            QPushButton#changePathButton:hover {{
-                background-color: {p.primary_hover};
-            }}
-            QPushButton#changePathButton:pressed {{
-                background-color: {p.primary_hover};
-            }}
-            """
+        self.change_path_button.setFixedSize(
+            rem(styles.BUTTON_WIDTH_REM), rem(styles.BUTTON_HEIGHT_REM)
         )
 
     def _apply_responsive_size(self):
@@ -144,6 +185,7 @@ class HomePage(QWidget):
     def apply_theme(self, dark: bool):
         self._is_dark = dark
         self.power_button.set_dark(dark)
+        self.change_path_button.set_dark(dark)
         self._apply_button_style()
 
     def get_scan_path(self) -> str:
