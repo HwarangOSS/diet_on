@@ -165,8 +165,7 @@ def main():
             duplicate_detail.update_responsive_size(window.width())
             stack.setCurrentWidget(duplicate_detail)
 
-    def go_to_complete(result_):
-        complete.set_result(result_.total_deleted, result_.total_size_freed)
+    def go_to_complete():
         complete.update_responsive_size(window.width())
         stack.setCurrentWidget(complete)
 
@@ -179,11 +178,6 @@ def main():
         plan = state["plan"]
         if plan is None or not selected_paths:
             return
-        # 삭제(디스크 I/O)는 동기 호출이라 완료 전까지 화면이 멈춘 채 마지막으로
-        # 그려진 프레임(체크 해제된 남은 항목이 보이는 상세 페이지)이 그대로 남는다.
-        # 무거운 작업을 시작하기 전에 화면을 먼저 complete로 넘겨둬서 그 프레임이
-        # 노출되지 않게 한다.
-        complete.set_result(0, 0)
         stack.setCurrentWidget(complete)
         result_ = delete_plan(plan, deletion_manager, set(selected_paths))
         print(
@@ -191,12 +185,11 @@ def main():
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
         _refresh_after_deletion(result_)
-        go_to_complete(result_)
+        go_to_complete()
 
     def on_duplicate_delete_requested(selected_paths):
         if not selected_paths:
             return
-        complete.set_result(0, 0)
         stack.setCurrentWidget(complete)
         result_ = deletion_manager.delete([Path(p) for p in selected_paths])
         print(
@@ -204,7 +197,7 @@ def main():
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
         _refresh_after_deletion(result_)
-        go_to_complete(result_)
+        go_to_complete()
 
     def on_complete_result_requested():
         stack.setCurrentWidget(result)

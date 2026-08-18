@@ -1,4 +1,5 @@
 import os
+import platform
 from pathlib import Path
 
 from PySide6.QtCore import QRectF, Qt, Signal
@@ -11,14 +12,13 @@ from diskcleaner.gui.typo import body_md, headline, path_quote, rem
 
 from . import styles
 
-DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
+_DEFAULT_ROOT_PATH = "C:\\" if platform.system() == "Windows" else str(Path.home())
+DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or _DEFAULT_ROOT_PATH
 
 SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
 
 
 class ChangePathButton(QPushButton):
-    """Qt 스타일시트는 inset box-shadow를 지원하지 않아 직접 그려서 구현한 버튼."""
-
     def __init__(self, text: str, parent=None):
         super().__init__(text, parent)
         self._is_dark = False
@@ -37,7 +37,6 @@ class ChangePathButton(QPushButton):
         path = QPainterPath()
         path.addRoundedRect(rect, radius, radius)
 
-        # 다크 모드에서는 PowerButton과 동일하게 palette의 primary 색을 사용
         p = palette_for(self._is_dark)
         fill = p.primary_hover if (self.underMouse() or self.isDown()) else p.primary
         painter.setPen(Qt.NoPen)
