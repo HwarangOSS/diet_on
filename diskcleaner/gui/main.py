@@ -1,8 +1,10 @@
-﻿import sys
+﻿import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
 from PySide6.QtCore import QObject, QTimer
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStackedWidget, QVBoxLayout
 
 from diskcleaner.core.deletion_pipeline import delete_plan
@@ -31,6 +33,11 @@ PROGRESS_TICK_STEP = 3
 PROGRESS_TICK_CAP = 90
 
 
+def resource_path(relative_path: str) -> str:
+    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
+
+
 class _AnalysisBridge(QObject):
     def __init__(self, on_finished, on_error):
         super().__init__()
@@ -48,6 +55,13 @@ def main():
     load_dotenv()
 
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(resource_path("assets/icon/icon.ico")))
+
+    if sys.platform == "win32":
+        import ctypes
+
+        myappid = "hwarangoss.dieton.app.1.0"
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     window = MainWindow()
     window.setWindowTitle("DietOn")
