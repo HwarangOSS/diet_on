@@ -1,17 +1,28 @@
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.bottom_action_button import BottomActionButton
 from diskcleaner.gui.components.duplicate_group import DuplicateGroupBox
-from diskcleaner.gui.typo import body_mini, headline_small
+from diskcleaner.gui.components.side_action_button import SideActionButton
+from diskcleaner.gui.typo import FontFamily, get_font
+
+from . import styles
 
 BUTTON_TEXT_DEFAULT = "그룹당 1개 남기고 삭제"
 BUTTON_TEXT_SELECTED = "선택 삭제"
 
+BACK_BUTTON_TEXT = "Back"
+
+
+def _design_scale(container_width: int) -> float:
+    return container_width / styles.REFERENCE_WIDTH
+
+
+def _title_font(scale: float):
+    return get_font(FontFamily.PLAY_REGULAR, 22, role="headline_small", scale=scale)
+
 
 class DuplicatePage(QWidget):
-    """중복 파일 상세 화면 - 그룹별로 원본 제외 사본을 기본 선택해 보여줌."""
-
     delete_requested = Signal(list)
     back_requested = Signal()
 
@@ -23,34 +34,38 @@ class DuplicatePage(QWidget):
         self._group_files: list[list[dict]] = []
         self._is_dark = False
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        outer = QHBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
 
-        self.back_label = QLabel("‹ 뒤로")
-        self.back_label.setObjectName("detailBackLabel")
-        self.back_label.setFont(body_mini())
-        self.back_label.setCursor(Qt.PointingHandCursor)
-        self.back_label.mousePressEvent = lambda _event: self.back_requested.emit()
-        layout.addWidget(self.back_label, alignment=Qt.AlignLeft)
+        self.back_button = SideActionButton()
+        self.back_button.set_text(BACK_BUTTON_TEXT)
+        self.back_button.clicked.connect(self.back_requested.emit)
+        outer.addWidget(self.back_button, alignment=Qt.AlignVCenter)
+
+        self._layout = layout = QVBoxLayout()
+        outer.addLayout(layout, stretch=1)
+        self._right_spacer = QWidget()
+        outer.addWidget(self._right_spacer)
 
         self.title_label = QLabel("Duplicate")
         self.title_label.setObjectName("detailTitle")
-        self.title_label.setFont(headline_small())
         self.title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title_label)
+        layout.addSpacing(0)
+        self._title_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.scroll_area = QScrollArea()
         self.scroll_area.setObjectName("detailScrollArea")
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFrameShape(QScrollArea.NoFrame)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.list_container = QWidget()
         self.list_container.setObjectName("duplicateListContainer")
         self.list_layout = QVBoxLayout(self.list_container)
         self.list_layout.setContentsMargins(0, 0, 0, 0)
-        self.list_layout.setSpacing(16)
         self.list_layout.addStretch()
 
         self.scroll_area.setWidget(self.list_container)
@@ -61,6 +76,8 @@ class DuplicatePage(QWidget):
         self.action_button.clicked.connect(self._on_action_clicked)
         layout.addWidget(self.action_button, alignment=Qt.AlignHCenter)
 
+        self.update_responsive_size(styles.REFERENCE_WIDTH)
+
     # API
     def set_groups(self, groups: list[dict]):
         for group_box in self._groups:
@@ -70,14 +87,17 @@ class DuplicatePage(QWidget):
         self._groups.clear()
         self._group_files = [g["files"] for g in groups]
 
+        insert_at = self.list_layout.count() - 1
         for g in groups:
             group_box = DuplicateGroupBox()
             group_box.set_dark(self._is_dark)
             group_box.set_group(g["name"], g["files"])
             group_box.file_toggled.connect(self._on_item_toggled)
-            self.list_layout.insertWidget(self.list_layout.count() - 1, group_box)
+            self.list_layout.insertWidget(insert_at, group_box)
+            insert_at += 1
             self._groups.append(group_box)
 
+        self.update_responsive_size(self.width() or styles.REFERENCE_WIDTH)
         self._refresh_button_text()
 
     def apply_theme(self, dark: bool):
@@ -85,15 +105,41 @@ class DuplicatePage(QWidget):
         for group_box in self._groups:
             group_box.set_dark(dark)
         self.action_button.set_dark(dark)
+        self.back_button.set_dark(dark)
 
     def update_responsive_size(self, container_width: int):
+        scale = _design_scale(container_width)
+
+        self.title_label.setFont(_title_font(scale))
+
+        margin = round(styles.REF_MARGIN * scale)
+        margin_top = round(styles.REF_MARGIN_TOP * scale)
+        margin_bottom = round(styles.REF_MARGIN_BOTTOM * scale)
+        self._layout.setContentsMargins(margin, margin_top, margin, margin_bottom)
+        self._layout.setSpacing(round(styles.REF_PAGE_GAP * scale))
+        self._title_gap.changeSize(
+            0, round(styles.REF_TITLE_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._layout.invalidate()
+        self.list_layout.setSpacing(round(styles.REF_LIST_GAP * scale))
+        back_button_width = self.back_button.width()
+        content_width = max(1, container_width - back_button_width - 2 * margin)
+        self._right_spacer.setFixedWidth(back_button_width)
+
         for group_box in self._groups:
-            group_box.update_responsive_size(container_width)
-        self.action_button.update_responsive_size(container_width)
+            group_box.update_responsive_size(content_width)
+        self.action_button.update_responsive_size(
+            round(content_width * styles.ACTION_BUTTON_WIDTH_SCALE),
+            scale=scale,
+            height_scale=styles.ACTION_BUTTON_HEIGHT_SCALE,
+            text_size=styles.ACTION_BUTTON_TEXT_SIZE,
+        )
+        self.back_button.update_responsive_size(self.height(), scale=scale)
 
     def refresh_fonts(self):
-        self.back_label.setFont(body_mini())
-        self.title_label.setFont(headline_small())
+        self.update_responsive_size(self.width() or styles.REFERENCE_WIDTH)
+        for group_box in self._groups:
+            group_box.refresh_fonts()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

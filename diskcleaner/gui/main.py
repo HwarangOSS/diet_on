@@ -9,12 +9,14 @@ from diskcleaner.core.deletion_pipeline import delete_plan
 from diskcleaner.gui.analysis_worker import start_analysis
 from diskcleaner.gui.components.titlebar import TitleBar
 from diskcleaner.gui.main_window import MainWindow
+from diskcleaner.gui.pages.complete import CompletePage
 from diskcleaner.gui.pages.delete_detail import DeletePage
 from diskcleaner.gui.pages.duplicate_detail import DuplicatePage
 from diskcleaner.gui.pages.home import HomePage
 from diskcleaner.gui.pages.loading import LoadingPage
 from diskcleaner.gui.pages.result import CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
 from diskcleaner.gui.result_mapping import (
+    remove_deleted_paths,
     report_to_delete_files,
     report_to_duplicate_groups,
     report_to_results,
@@ -66,12 +68,14 @@ def main():
     result = ResultPage()
     delete_detail = DeletePage()
     duplicate_detail = DuplicatePage()
+    complete = CompletePage()
 
     stack.addWidget(home)
     stack.addWidget(loading)
     stack.addWidget(result)
     stack.addWidget(delete_detail)
     stack.addWidget(duplicate_detail)
+    stack.addWidget(complete)
 
     root_layout.addWidget(stack)
 
@@ -102,7 +106,7 @@ def main():
         if state["progress_value"] < PROGRESS_TICK_CAP:
             state["progress_value"] += PROGRESS_TICK_STEP
             loading.update_progress(state["progress_value"])
-            print(f"[진행] {state['progress_value']}% (스캔 백그라운드 진행 중)")
+            print(f"{state['progress_value']}%")
 
     def on_analysis_finished(report, plan):
         _stop_progress_timer()
@@ -115,13 +119,13 @@ def main():
         result.set_path(state["scan_path"])
         result.set_results(report_to_results(report, plan))
         stack.setCurrentWidget(result)
-        print("[DEBUG] 분석 완료 → 결과 페이지로 전환")
+        print("분석 완료 → 결과 페이지로 전환")
 
     def on_analysis_error(message: str):
         _stop_progress_timer()
         _wait_for_thread()
         loading.stop()
-        print(f"[ERROR] 분석 실패: {message}")
+        print(f"[ERROR]: {message}")
         stack.setCurrentWidget(home)
 
     def go_to_loading():
@@ -131,7 +135,7 @@ def main():
         state["scan_path"] = scan_path
         loading.set_path(scan_path)
         loading.start()
-        print(f"[DEBUG] 스캔 요청됨! 대상: {scan_path}")
+        print(f"스캔 요청됨! 대상: {scan_path}")
 
         thread, worker = start_analysis(scan_path)
         bridge = _AnalysisBridge(on_analysis_finished, on_analysis_error)
@@ -161,26 +165,49 @@ def main():
             duplicate_detail.update_responsive_size(window.width())
             stack.setCurrentWidget(duplicate_detail)
 
+    def go_to_complete(result_):
+        complete.set_result(result_.total_deleted, result_.total_size_freed)
+        complete.update_responsive_size(window.width())
+        stack.setCurrentWidget(complete)
+
+    def _refresh_after_deletion(result_):
+        deleted_paths = {str(p) for p in result_.success}
+        remove_deleted_paths(state["report"], state["plan"], deleted_paths)
+        result.set_results(report_to_results(state["report"], state["plan"]))
+
     def on_delete_target_delete_requested(selected_paths):
         plan = state["plan"]
         if plan is None or not selected_paths:
             return
+        # 삭제(디스크 I/O)는 동기 호출이라 완료 전까지 화면이 멈춘 채 마지막으로
+        # 그려진 프레임(체크 해제된 남은 항목이 보이는 상세 페이지)이 그대로 남는다.
+        # 무거운 작업을 시작하기 전에 화면을 먼저 complete로 넘겨둬서 그 프레임이
+        # 노출되지 않게 한다.
+        complete.set_result(0, 0)
+        stack.setCurrentWidget(complete)
         result_ = delete_plan(plan, deletion_manager, set(selected_paths))
         print(
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
-        go_to_loading()
+        _refresh_after_deletion(result_)
+        go_to_complete(result_)
 
     def on_duplicate_delete_requested(selected_paths):
         if not selected_paths:
             return
+        complete.set_result(0, 0)
+        stack.setCurrentWidget(complete)
         result_ = deletion_manager.delete([Path(p) for p in selected_paths])
         print(
             f"[삭제] {result_.total_deleted}개 삭제, {result_.total_failed}개 실패, "
             f"{result_.total_size_freed / (1024**2):.1f}MB 확보"
         )
-        go_to_loading()
+        _refresh_after_deletion(result_)
+        go_to_complete(result_)
+
+    def on_complete_result_requested():
+        stack.setCurrentWidget(result)
 
     home.scan_requested.connect(go_to_loading)
     result.card_clicked.connect(go_to_detail)
@@ -188,6 +215,7 @@ def main():
     duplicate_detail.delete_requested.connect(on_duplicate_delete_requested)
     delete_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
     duplicate_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
+    complete.result_requested.connect(on_complete_result_requested)
 
     is_dark = load_dark_mode()
 
@@ -201,6 +229,7 @@ def main():
         result.apply_theme(dark=is_dark)
         delete_detail.apply_theme(dark=is_dark)
         duplicate_detail.apply_theme(dark=is_dark)
+        complete.apply_theme(dark=is_dark)
         save_dark_mode(is_dark)
 
     titlebar.menu_requested.connect(toggle_theme)
@@ -212,6 +241,7 @@ def main():
     result.apply_theme(dark=is_dark)
     delete_detail.apply_theme(dark=is_dark)
     duplicate_detail.apply_theme(dark=is_dark)
+    complete.apply_theme(dark=is_dark)
 
     # 폰트 연결
     set_global_scale(window.width())
@@ -221,12 +251,14 @@ def main():
     window.font_scale_changed.connect(result.refresh_fonts)
     window.font_scale_changed.connect(delete_detail.refresh_fonts)
     window.font_scale_changed.connect(duplicate_detail.refresh_fonts)
+    window.font_scale_changed.connect(complete.refresh_fonts)
     home.refresh_fonts()
     loading.refresh_fonts()
     titlebar.refresh_fonts()
     result.refresh_fonts()
     delete_detail.refresh_fonts()
     duplicate_detail.refresh_fonts()
+    complete.refresh_fonts()
     result.update_responsive_size(window.width())
 
     window.show()

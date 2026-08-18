@@ -87,11 +87,15 @@ QLabel#clickLabel {{
     color: {p.text_primary};
 }}
 
+QLabel#pathQuoteLabel {{
+    color: {p.title};
+}}
+
 QLabel#subLabel {{
     color: {p.text_secondary};
 }}
 
-QLabel#hintLabel {{
+QLabel#hintLabel, QLabel#scanPathLabel {{
     color: {p.text_tertiary};
 }}
 
@@ -176,10 +180,6 @@ QLabel#detailBackLabel {{
 QLabel#deleteGroupTitle {{
     color: {p.text_secondary};
 }}
-QCheckBox#deleteGroupCheckbox {{
-    color: {p.primary};
-}}
-
 QScrollBar:vertical {{
     background: transparent;
     width: 10px;

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 from PySide6.QtCore import QByteArray, QRectF, Qt
@@ -7,6 +9,8 @@ from PySide6.QtSvg import QSvgRenderer
 ICON_SIZE = 140
 
 SVG_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "svgs")
+_REFERENCE_ASPECT_FILE = "file2.svg"
+_reference_aspect: float | None = None
 
 
 def _load_svg_bytes(filename: str) -> QByteArray:
@@ -20,21 +24,25 @@ def _load_svg_bytes(filename: str) -> QByteArray:
     return QByteArray(content.encode("utf-8"))
 
 
+def _get_reference_aspect() -> float:
+    global _reference_aspect
+    if _reference_aspect is None:
+        size = QSvgRenderer(_load_svg_bytes(_REFERENCE_ASPECT_FILE)).defaultSize()
+        _reference_aspect = size.width() / size.height() if not size.isEmpty() else 1.0
+    return _reference_aspect
+
+
 def _render_pixmap_from_file(filename: str, max_size: int = ICON_SIZE, scale: int = 3) -> QPixmap:
     svg_bytes = _load_svg_bytes(filename)
     renderer = QSvgRenderer(svg_bytes)
 
-    default_size = renderer.defaultSize()
-    if default_size.isEmpty():
-        w, h = max_size, max_size
+    ratio = _get_reference_aspect()
+    if ratio >= 1:
+        w = max_size
+        h = int(max_size / ratio)
     else:
-        ratio = default_size.width() / default_size.height()
-        if ratio >= 1:
-            w = max_size
-            h = int(max_size / ratio)
-        else:
-            h = max_size
-            w = int(max_size * ratio)
+        h = max_size
+        w = int(max_size * ratio)
 
     render_w, render_h = w * scale, h * scale
 

@@ -1,10 +1,11 @@
 from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QTimer, Signal
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
-from diskcleaner.gui.components.loading import icons
-from diskcleaner.gui.components.loading.progress_bar import LoadingProgressBar
-from diskcleaner.gui.typo import body_md, body_mini, headline
+from diskcleaner.gui.components.loading import LoadingProgressBar, icons
+from diskcleaner.gui.typo import body_md, body_mini, headline, rem
+
+from . import styles
 
 LOADING_MESSAGES = [
     "AI가 파일을 탐색 중이에요",
@@ -14,14 +15,8 @@ LOADING_MESSAGES = [
     "거의 다 됐어요, 조금만 기다려주세요",
 ]
 
-ICON_SWAP_INTERVAL_MS = 600
-MESSAGE_INTERVAL_MS = 2200
-FADE_DURATION_MS = 350
-
 
 class LoadingPage(QWidget):
-    """분석 진행 중 화면 - 진행률 표시와 안내 메시지 로테이션."""
-
     analyze_finished = Signal()
 
     def __init__(self, parent=None):
@@ -38,11 +33,11 @@ class LoadingPage(QWidget):
         layout.setSpacing(0)
 
         self.icon_label = QLabel()
-        self.icon_label.setFixedSize(icons.ICON_SIZE, icons.ICON_SIZE)
         self.icon_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.icon_label, alignment=Qt.AlignCenter)
 
-        layout.addSpacing(20)
+        layout.addSpacing(0)
+        self._icon_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.title_label = QLabel("Finding...")
         self.title_label.setObjectName("loadingTitle")
@@ -50,7 +45,8 @@ class LoadingPage(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title_label)
 
-        layout.addSpacing(8)
+        layout.addSpacing(0)
+        self._title_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.message_label = QLabel(LOADING_MESSAGES[0])
         self.message_label.setObjectName("loadingMessage")
@@ -62,7 +58,8 @@ class LoadingPage(QWidget):
         self.message_label.setGraphicsEffect(self._message_opacity)
         self._message_opacity.setOpacity(1.0)
 
-        layout.addSpacing(8)
+        layout.addSpacing(0)
+        self._path_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.path_label = QLabel()
         self.path_label.setObjectName("loadingPathLabel")
@@ -70,7 +67,8 @@ class LoadingPage(QWidget):
         self.path_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.path_label)
 
-        layout.addSpacing(16)
+        layout.addSpacing(0)
+        self._progress_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.progress_bar = LoadingProgressBar()
         layout.addWidget(self.progress_bar, alignment=Qt.AlignCenter)
@@ -81,7 +79,7 @@ class LoadingPage(QWidget):
         self._message_timer = QTimer(self)
         self._message_timer.timeout.connect(self._next_message)
 
-        self._apply_icon()
+        self._apply_responsive_size()
 
     def set_path(self, path: str):
         self._scan_path = path
@@ -96,13 +94,30 @@ class LoadingPage(QWidget):
         elided = metrics.elidedText(f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width)
         self.path_label.setText(elided)
 
+    def _apply_responsive_size(self):
+        self._icon_gap.changeSize(
+            0, rem(styles.ICON_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._title_gap.changeSize(
+            0, rem(styles.TITLE_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._path_gap.changeSize(
+            0, rem(styles.PATH_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._progress_gap.changeSize(
+            0, rem(styles.PROGRESS_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self.layout().invalidate()
+        self.progress_bar.update_responsive_size()
+        self._apply_icon()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self._refresh_path_text()
 
     def start(self):
-        self._icon_timer.start(ICON_SWAP_INTERVAL_MS)
-        self._message_timer.start(MESSAGE_INTERVAL_MS)
+        self._icon_timer.start(styles.ICON_SWAP_INTERVAL_MS)
+        self._message_timer.start(styles.MESSAGE_INTERVAL_MS)
 
     def stop(self):
         self._icon_timer.stop()
@@ -118,7 +133,13 @@ class LoadingPage(QWidget):
         self._apply_icon()
 
     def _apply_icon(self):
-        pixmap = icons.make_file2_icon() if self._icon_toggle else icons.make_file1_icon()
+        icon_size = rem(styles.ICON_SIZE_REM)
+        self.icon_label.setFixedSize(icon_size, icon_size)
+        pixmap = (
+            icons.make_file2_icon(size=icon_size)
+            if self._icon_toggle
+            else icons.make_file1_icon(size=icon_size)
+        )
         self.icon_label.setPixmap(pixmap)
 
     def _next_message(self):
@@ -126,7 +147,7 @@ class LoadingPage(QWidget):
         next_text = LOADING_MESSAGES[self._message_index]
 
         fade_out = QPropertyAnimation(self._message_opacity, b"opacity")
-        fade_out.setDuration(FADE_DURATION_MS)
+        fade_out.setDuration(styles.FADE_DURATION_MS)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
         fade_out.setEasingCurve(QEasingCurve.InCubic)
@@ -134,7 +155,7 @@ class LoadingPage(QWidget):
         def on_fade_out_finished():
             self.message_label.setText(next_text)
             fade_in = QPropertyAnimation(self._message_opacity, b"opacity")
-            fade_in.setDuration(FADE_DURATION_MS)
+            fade_in.setDuration(styles.FADE_DURATION_MS)
             fade_in.setStartValue(0.0)
             fade_in.setEndValue(1.0)
             fade_in.setEasingCurve(QEasingCurve.OutCubic)
@@ -153,4 +174,5 @@ class LoadingPage(QWidget):
         self.title_label.setFont(headline())
         self.message_label.setFont(body_md())
         self.path_label.setFont(body_mini())
+        self._apply_responsive_size()
         self._refresh_path_text()

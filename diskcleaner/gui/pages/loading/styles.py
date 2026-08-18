@@ -1,0 +1,11 @@
+from diskcleaner.gui.components.loading import icons
+
+ICON_SWAP_INTERVAL_MS = 600
+MESSAGE_INTERVAL_MS = 2200
+FADE_DURATION_MS = 350
+
+ICON_SIZE_REM = icons.ICON_SIZE / 16
+ICON_GAP_REM = 20 / 16
+TITLE_GAP_REM = 8 / 16
+PATH_GAP_REM = 8 / 16
+PROGRESS_GAP_REM = 16 / 16

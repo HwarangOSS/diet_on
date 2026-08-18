@@ -1,23 +1,50 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
 from diskcleaner.gui.components.loading import icons as loading_icons
 from diskcleaner.gui.components.status_card import STATUS_DANGER, STATUS_SUCCESS, StatusCard
 from diskcleaner.gui.components.status_card.styles import format_gb
-from diskcleaner.gui.typo import body_md, body_mini, headline, headline_small
+from diskcleaner.gui.typo import FontFamily, get_font
 
-SUMMARY_ICON_SIZE = 120
+from . import styles
+
+
+def _design_scale(container_width: int) -> float:
+    return container_width / styles.REFERENCE_WIDTH
+
+
+def _capacity_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_REGULAR, 14, role="body_md", scale=scale)
+
+
+def _gb_font(scale: float):
+    return get_font(FontFamily.PLAY_REGULAR, 26, role="headline", scale=scale)
+
+
+def _heading_font(scale: float):
+    return get_font(FontFamily.PLAY_REGULAR, 20, role="headline_small", scale=scale)
+
+
+def _path_font(scale: float):
+    return get_font(FontFamily.PRETENDARD_REGULAR, 9, role="body_mini", scale=scale)
+
+
+def _tighten(label: QLabel):
+    """폰트 자체의 줄간격(leading)까지 라벨 높이에 포함되는 걸 없애서, 위아래로
+    쌓인 라벨끼리 spacing=0이어도 실제로 붙어 보이게 함. (음수 spacing은 창이
+    커지면 값도 같이 커져서 텍스트끼리 겹쳐버리므로 쓰지 않음)"""
+    metrics = QFontMetrics(label.font())
+    label.setFixedHeight(metrics.ascent() + metrics.descent())
+
 
 CATEGORY_DELETE_TARGET = "delete_target"
 CATEGORY_DUPLICATE = "duplicate"
 
 CARD_TEXTS = {
-    # "즉시 삭제 가능"(규칙 기반, LLM 미개입) 파일도 이 카드에 합산되므로 "AI가"라고
-    # 단정하지 않음 - 상세화면에 들어가면 카테고리별로 구분해서 보여줌.
     CATEGORY_DELETE_TARGET: {
-        "found": "삭제가 필요한 파일을 발견했어요",
-        "empty": "삭제할 파일을 발견하지 못했어요",
+        "found": "AI가 삭제가 필요한 파일을 발견했어요",
+        "empty": "AI가 삭제할 파일을 발견하지 못했어요",
     },
     CATEGORY_DUPLICATE: {
         "found": "AI가 중복 파일을 발견했어요",
@@ -27,8 +54,6 @@ CARD_TEXTS = {
 
 
 class ResultPage(QWidget):
-    """분석 결과 요약 화면 - 삭제 대상/중복 카드, 클릭 시 상세 페이지로 이동."""
-
     card_clicked = Signal(str)
 
     def __init__(self, parent=None):
@@ -37,51 +62,43 @@ class ResultPage(QWidget):
 
         self._scan_path = ""
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        self._layout = layout = QVBoxLayout(self)
 
-        summary_row = QHBoxLayout()
-        summary_row.setSpacing(20)
+        self._summary_row = summary_row = QHBoxLayout()
 
         self.summary_icon = QLabel()
-        self.summary_icon.setFixedSize(SUMMARY_ICON_SIZE, SUMMARY_ICON_SIZE)
-        self.summary_icon.setPixmap(loading_icons.make_file1_icon(size=SUMMARY_ICON_SIZE))
         summary_row.addWidget(self.summary_icon, alignment=Qt.AlignVCenter)
 
-        summary_text_col = QVBoxLayout()
-        summary_text_col.setSpacing(4)
+        self._summary_text_col = summary_text_col = QVBoxLayout()
 
         self.capacity_label = QLabel("확보 가능 용량")
         self.capacity_label.setObjectName("resultCapacityLabel")
-        self.capacity_label.setFont(body_md())
         summary_text_col.addWidget(self.capacity_label)
 
         self.gb_label = QLabel("0GB")
         self.gb_label.setObjectName("resultGbLabel")
-        self.gb_label.setFont(headline())
         summary_text_col.addWidget(self.gb_label)
 
         summary_row.addLayout(summary_text_col)
+        summary_row.setAlignment(summary_text_col, Qt.AlignVCenter)
         summary_row.addStretch()
 
         layout.addLayout(summary_row)
-        layout.addSpacing(8)
+        layout.addSpacing(0)
+        self._heading_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.heading_label = QLabel("Result")
         self.heading_label.setObjectName("resultHeading")
-        self.heading_label.setFont(headline_small())
         layout.addWidget(self.heading_label)
 
         self.path_label = QLabel()
         self.path_label.setObjectName("resultPathLabel")
-        self.path_label.setFont(body_mini())
         layout.addWidget(self.path_label)
 
-        layout.addSpacing(4)
+        layout.addSpacing(0)
+        self._cards_gap = layout.itemAt(layout.count() - 1).spacerItem()
 
         self.cards_layout = QVBoxLayout()
-        self.cards_layout.setSpacing(12)
         layout.addLayout(self.cards_layout)
         layout.addStretch()
 
@@ -91,6 +108,8 @@ class ResultPage(QWidget):
             card.clicked.connect(lambda k=key: self.card_clicked.emit(k))
             self.cards_layout.addWidget(card)
             self._cards[key] = card
+
+        self.update_responsive_size(styles.REFERENCE_WIDTH)
 
     # API ----
     def set_path(self, path: str):
@@ -102,7 +121,8 @@ class ResultPage(QWidget):
             self.path_label.setText("")
             return
         metrics = QFontMetrics(self.path_label.font())
-        available_width = max(self.width() - 40, 0)
+        margin = round(styles.REF_MARGIN * _design_scale(self.width()))
+        available_width = max(self.width() - margin * 2, 0)
         elided = metrics.elidedText(f"검사 대상: {self._scan_path}", Qt.ElideMiddle, available_width)
         self.path_label.setText(elided)
 
@@ -126,17 +146,43 @@ class ResultPage(QWidget):
             card.set_dark(dark)
 
     def update_responsive_size(self, container_width: int):
+        scale = _design_scale(container_width)
+
+        self.capacity_label.setFont(_capacity_font(scale))
+        self.gb_label.setFont(_gb_font(scale))
+        self.heading_label.setFont(_heading_font(scale))
+        self.path_label.setFont(_path_font(scale))
+        _tighten(self.capacity_label)
+        _tighten(self.gb_label)
+
+        margin = round(styles.REF_MARGIN * scale)
+        margin_top = round(styles.REF_MARGIN_TOP * scale)
+        self._layout.setContentsMargins(margin, margin_top, margin, margin)
+        self._layout.setSpacing(round(styles.REF_CARDS_GAP * scale))
+        self._summary_row.setSpacing(round(styles.REF_SUMMARY_GAP * scale))
+        self._summary_text_col.setSpacing(round(styles.REF_SUMMARY_TEXT_GAP * scale))
+        self._heading_gap.changeSize(
+            0, round(styles.REF_HEADING_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self._cards_gap.changeSize(
+            0, round(styles.REF_CARDS_GAP * scale), QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+        self.cards_layout.setSpacing(round(styles.REF_CARDS_ITEM_GAP * scale))
+        self._layout.invalidate()
+
+        icon_size = max(1, round(styles.REF_ICON_SIZE * scale))
+        if icon_size != self.summary_icon.width():
+            self.summary_icon.setFixedSize(icon_size, icon_size)
+            self.summary_icon.setPixmap(loading_icons.make_file2_icon(size=icon_size))
+
         for card in self._cards.values():
             card.update_responsive_size(container_width)
 
-    def refresh_fonts(self):
-        self.capacity_label.setFont(body_md())
-        self.gb_label.setFont(headline())
-        self.heading_label.setFont(headline_small())
-        self.path_label.setFont(body_mini())
         self._refresh_path_text()
+
+    def refresh_fonts(self):
+        self.update_responsive_size(self.width())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.update_responsive_size(self.width())
-        self._refresh_path_text()
