@@ -54,14 +54,14 @@ class _AnalysisBridge(QObject):
 def main():
     load_dotenv()
 
-    app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(resource_path("assets/icon/icon.ico")))
-
     if sys.platform == "win32":
         import ctypes
 
         myappid = "hwarangoss.dieton.app.1.0"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+    app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(resource_path("assets/icon/icon.ico")))
 
     window = MainWindow()
     window.setWindowTitle("DietOn")
