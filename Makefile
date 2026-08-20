@@ -1,4 +1,4 @@
-.PHONY: help install test test-bench lint format clean build
+.PHONY: help install test test-bench lint format clean build build-exe
 
 help:           ## 显示帮助信息
 	@echo "可用命令:"
@@ -40,6 +40,12 @@ clean:          ## 清理临时文件
 
 build:          ## 构建分发包
 	python -m build
+
+build-exe:      ## DietOn 배포용 exe 빌드 (dist/DietOn.exe)
+	pyinstaller --noconfirm --onefile --windowed --name DietOn \
+		--icon "diskcleaner/gui/assets/icon/icon.ico" \
+		--add-data "diskcleaner/gui/assets;assets" \
+		-p . diskcleaner/gui/main.py
 
 dev:            ## 设置开发环境
 	pip install -e ".[dev]"

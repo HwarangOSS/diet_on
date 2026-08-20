@@ -38,6 +38,7 @@ llm = [
     "anthropic>=0.77",
 ]
 dev = [
+    "pyinstaller>=6.0",
     "pytest>=7.0",
     "pytest-cov>=3.0",
     "pytest-benchmark>=4.0",
