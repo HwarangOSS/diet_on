@@ -91,9 +91,8 @@ class InfoPage(QWidget):
         self._layout.setContentsMargins(margin, margin_top, margin, margin_top)
         self._layout.setSpacing(round(styles.REF_PAGE_GAP * scale))
 
-        back_button_width = self.back_button.width()
-        self._right_spacer.setFixedWidth(back_button_width)
         self.back_button.update_responsive_size(self.height(), scale=scale)
+        self._right_spacer.setFixedWidth(self.back_button.width())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

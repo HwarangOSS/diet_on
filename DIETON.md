@@ -12,7 +12,7 @@ AI 기반 파일명 탐색 + 원클릭 일괄 최적화 PC 클리너.
 
 ## 설치 및 실행
 
-Windows 빌드본은 `DietOn_v1.0/DietOn.exe`를 바로 실행하면 됩니다.
+Windows 빌드본은 [GitHub Release](https://github.com/HwarangOSS/diet_on/releases)에서 `DietOn.exe`를 받아 바로 실행하면 됩니다. 로컬에서 직접 빌드하면 `make build-exe` 실행 후 `dist/DietOn.exe`에 생성됩니다.
 
 소스에서 실행하려면:
 
@@ -52,7 +52,7 @@ macOS 빌드/실기 검증은 아직 진행 중이라 현재는 Windows 기준�
 
 DietOn은 [gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)를 포크한 프로젝트이고, 원본과 마찬가지로 MIT License를 따릅니다. 아래 저작권 표기 중 2025년 줄은 원본 프로젝트, 2026년 HwarangOSS 줄은 이 저장소에서 추가한 부분에 대한 것입니다.
 
-```
+```text
 MIT License
 
 Copyright (c) 2025 Disk Cleaner Contributors
