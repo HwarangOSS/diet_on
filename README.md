@@ -1,561 +1,80 @@
-# Disk Cleaner v2.1 - Intelligent Cross-Platform Disk Management
+# DietOn
 
-**[English](README.md)** | **[中文文档](README_zh.md)**
+![DietOn 미리보기](docs/images/dieton-preview.png)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/gccszs/disk-cleaner)
-[![Skill](https://img.shields.io/badge/skill-add--skill-blue)](https://github.com/gccszs/disk-cleaner)
+AI 기반 파일명 탐색 + 원클릭 일괄 최적화 PC 클리너.
 
-A comprehensive cross-platform disk space monitoring, analysis, and intelligent cleaning toolkit. Features advanced 3D file classification, duplicate detection, automated scheduling, and platform-specific optimization.
+기존 PC 최적화 프로그램은 기능이 많은 대신 뭘 눌러야 할지 판단하기 어려웠습니다. DietOn은 OS 자체 설정과 겹치는 기능은 빼고, 판단이 필요한 항목(중복 파일, 보안 프로그램 등)만 상세 화면에서 개별 확인하도록 구성했습니다. 나머지는 원클릭으로 끝냅니다.
 
-> **📌 이 저장소는 [gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)를 포크한 프로젝트입니다.**
-> 원본 저작자 및 라이선스(MIT)는 [LICENSE](LICENSE)를 따릅니다.
-> 아래 문서의 `skills/disk-cleaner/scripts/*.py` CLI 명령어들은 **원본 프로젝트 기준 사용법**이며,
-> 이 포크에서는 해당 스크립트를 제거하고 동일한 엔진(`diskcleaner/` 패키지)을 사용하는 PySide6 기반 GUI 앱으로 대체합니다.
+[gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)를 포크해 제작했습니다. 원본 프로젝트 고지는 [README.md](README.md), 라이선스 전문은 [LICENSE](LICENSE) 참고.
 
-## ⚡ Quick Install
+## 원본과 차이점
 
-### Option 1: Install as Agent Skill (Recommended)
+원본은 CLI 스크립트(`skills/disk-cleaner/scripts/*.py`) 기반이었습니다. DietOn은 같은 분석 엔진(`diskcleaner/` 패키지)을 그대로 쓰면서 스크립트를 PySide6 GUI로 바꿨고, Anthropic Claude API로 AI 삭제 권장을 붙였습니다(원본은 규칙 기반만 제공). 라벨/문구는 한국어로 매핑하였고, 원클릭 일괄 삭제 흐름과 중복 파일·AI 분석 대상 상세 화면을 새로 추가했습니다.
 
-Install directly from CLI:
+## 설치 및 실행
+
+Windows 빌드본은 [GitHub Release](https://github.com/HwarangOSS/diet_on/releases)에서 `DietOn.exe`를 받아 바로 실행하면 됩니다. 로컬에서 직접 빌드하면 `make build-exe` 실행 후 `dist/DietOn.exe`에 생성됩니다.
+
+소스에서 실행하려면:
 
 ```bash
-npx add-skill gccszs/disk-cleaner
-```
-OR
-```bash
-npx skills add gccszs/disk-cleaner
-```
-
-This will install the skill with all necessary files. The `.skill` package contains only the essential components:
-- ✅ Core modules (`diskcleaner/`)
-- ✅ Executable scripts (`scripts/`)
-- ✅ Skill definition (`SKILL.md`)
-- ✅ Reference documentation (`references/`)
-
-**Note:** The skill package excludes tests, CI/CD configs, and development files for a clean, minimal installation.
-
-### Option 2: Clone Repository
-
-For development or standalone use:
-
-```bash
-git clone https://github.com/gccszs/disk-cleaner.git
-cd disk-cleaner
+git clone https://github.com/HwarangOSS/diet_on.git
+cd diet_on
+pip install -e ".[llm]"
+python -m diskcleaner.gui.main
 ```
 
-See [Usage](#usage-examples) section for how to run the scripts.
+AI 삭제 권장을 쓰려면 실행 전 `ANTHROPIC_API_KEY` 환경변수를 설정해야 합니다.
 
----
+macOS 빌드/실기 검증은 아직 진행 중이라 현재는 Windows 기준으로만 확인된 상태입니다.
 
-## ✨ v2.1 New Features
+## 도움말
 
-### 🚀 Critical Cross-Platform Encoding Fix
-- **✅ ASCII-Safe Output** - All scripts use ASCII characters for 100% cross-platform compatibility
-- **🌐 Universal Console Support** - Works on Windows GBK, Linux UTF-8, macOS UTF-8, and any other encoding
-- **🛡️ No Encoding Errors** - Eliminates UnicodeEncodeError on all platforms
-- **📝 Smart Emoji Policy** - Scripts use ASCII, Agents can use emojis when reporting to users
+### 실행 방법
 
-### ⚡ Progressive Scanning for Large Disks
-- **🔍 Quick Sample Mode** - Estimate disk size and scan time in just 1 second
-- **📊 Progressive Scan Mode** - Get partial results in 30 seconds for large disks (500GB+)
-- **⏱️ Smart Time Limits** - Prevent users from waiting hours for full scans
-- **🔄 Real-Time Feedback** - Progress updates every 2 seconds
-- **⏸️ Interruptible** - Press Ctrl+C to get partial results anytime
+1. 스캔할 경로 선택 (기본값: 사용자 홈 디렉토리) — 전체 드라이브를 그대로 스캔하면 시간이 오래 걸리므로 원하는 폴더로 바꿔서 검사하는 걸 권장
+2. 스캔 시작 → 파일 분석 완료까지 대기
+3. 결과 화면에서 안전 삭제 대상 / 중복 파일 / AI 분석 대상 확인
+4. 원클릭 일괄 삭제 또는 상세 화면에서 개별 선택 후 삭제
 
-### 🤖 Intelligent Bootstrap System
-- **📍 Auto Location Detection** - Automatically searches 20+ common skill package locations
-- **🔧 Environment Variable Support** - Override with `DISK_CLEANER_SKILL_PATH`
-- **📦 Auto Module Import** - Automatically imports diskcleaner modules with fallbacks
-- **🌍 Cross-Platform Python Detection** - Tries both `python` and `python3`
-- **🛠️ Diagnostic Tool** - `check_skill.py` verifies all functionality
+### AI 삭제 권장 기능
 
-### 🎯 Advanced Performance Optimizations
-- **⚡ QuickProfiler** - Fast sampling to estimate scan characteristics
-- **🚀 ConcurrentScanner** - Multi-threaded I/O for 3-5x speedup
-- **🔍 os.scandir() Optimization** - 3-5x faster than Path.glob
-- **💾 IncrementalCache** - Cache scan results for faster repeat scans
-- **🧠 Memory Monitoring** - Auto-adapts based on available memory
-- **⏹️ Early Stopping** - Configurable file/time limits
+`ANTHROPIC_API_KEY`가 설정돼 있으면 파일명 기반 AI 삭제 권장을 쓸 수 있습니다. 설정 안 해도 실행은 되고, 이 경우 기본 규칙 기반 권장만 나옵니다. Claude API는 사용한 토큰만큼 과금되는 유료 API라 [console.anthropic.com](https://console.anthropic.com)에서 키를 따로 발급받아야 합니다. API로는 파일명, 크기, 수정시각만 넘어가고 전체 경로나 파일 내용은 로컬에만 남습니다.
 
-### 🔧 Core v2.0 Features
-- **🤖 Intelligent 3D Classification** - Files categorized by type, risk level, and age
-- **🔍 Adaptive Duplicate Detection** - Fast/accurate strategies with automatic optimization
-- **⚡ Incremental Scanning** - Cache-based performance optimization for repeated scans
-- **🔒 Process-Aware Safety** - File lock detection and process termination
-- **💻 Platform-Specific Optimization** - Windows Update, APT, Homebrew cache detection
-- **⏰ Automated Scheduling** - Timer-based cleanup tasks
-- **🎯 Interactive Cleanup UI** - 5 view modes with visual feedback
-- **🛡️ Enhanced Safety** - Protected paths, 'YES' confirmation, backup & logging
+규칙 기반 권장은 임시/빌드 산출물, 로그, 캐시 파일을 안전 삭제 대상으로 자동 분류하고 다운로드/미디어/문서 파일은 확인 필요로 분류합니다. 시스템 파일 등 보호 대상 경로·확장자는 항상 삭제 후보에서 빠집니다.
 
-## Features
+앱 내 더보기 메뉴 → 도움말/라이센스에서도 같은 내용을 볼 수 있습니다.
 
-### Core Capabilities
-- **Disk Space Analysis**: Identify large files and directories consuming disk space
-- **Smart Cleanup**: AI-powered suggestions based on file patterns and usage
-- **Duplicate Detection**: Find and remove duplicate files to reclaim space
-- **Safe Junk Cleaning**: Remove temporary files, caches, logs with built-in safety mechanisms
-- **Disk Monitoring**: Real-time monitoring with configurable alert thresholds
-- **Cross-Platform**: Full support for Windows, Linux, and macOS
-- **Zero Dependencies**: Pure Python standard library implementation
+## 삭제 안전성
 
-### Advanced Features
-- **3D File Classification**: Type × Risk × Age matrix for smart decisions
-- **Incremental Scanning**: Only scan changed files for 10x faster subsequent scans
-- **File Lock Detection**: Prevents deletion of locked files on all platforms
-- **Platform-Specific Cleanup**: Windows Update, Linux package caches, macOS Xcode derived data
-- **Automated Scheduling**: Set up recurring cleanup tasks with custom intervals
-- **Interactive Selection**: Choose exactly what to clean with detailed previews
+삭제 대상 판단은 위 규칙 기반 분류를 기본으로 하고, AI가 켜져 있으면 Claude가 붙인 권장 사유가 같이 표시됩니다. 다만 현재 GUI 삭제는 휴지통을 거치지 않는 영구 삭제이고 별도 복구 기능도 없습니다. 삭제 실행 전 상세 화면에서 대상 목록을 꼭 확인하고, 중요 파일이 섞여 있을 수 있는 폴더는 미리 백업해두는 걸 권장합니다.
 
-## Quick Start
+## 라이센스
 
-### Prerequisites
+DietOn은 [gccszs/disk-cleaner](https://github.com/gccszs/disk-cleaner)를 포크한 프로젝트이고, 원본과 마찬가지로 MIT License를 따릅니다. 아래 저작권 표기 중 2025년 줄은 원본 프로젝트, 2026년 HwarangOSS 줄은 이 저장소에서 추가한 부분에 대한 것입니다.
 
-Python 3.7 or higher (no external dependencies required - uses only standard library).
+```text
+MIT License
 
-### Basic Usage
+Copyright (c) 2025 Disk Cleaner Contributors
+Copyright (c) 2026 HwarangOSS (DietOn)
 
-```bash
-# Quick sample mode (1 second) - NEW v2.0
-python skills/disk-cleaner/scripts/analyze_disk.py --sample
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-# Progressive scanning for large disks - NEW v2.0
-python skills/disk-cleaner/scripts/analyze_progressive.py --max-seconds 30
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-# Verify skill package - NEW v2.0
-python skills/disk-cleaner/scripts/check_skill.py
-
-# Analyze disk space (with smart defaults)
-python skills/disk-cleaner/scripts/analyze_disk.py
-
-# Smart cleanup with duplicate detection (NEW v2.1)
-python -c "from diskcleaner.core import SmartCleanupEngine; engine = SmartCleanupEngine('.'); print(engine.get_summary(engine.analyze()))"
-
-# Preview cleanup (dry-run mode)
-python skills/disk-cleaner/scripts/clean_disk.py --dry-run
-
-# Monitor disk usage
-python skills/disk-cleaner/scripts/monitor_disk.py
-
-# Continuous monitoring
-python skills/disk-cleaner/scripts/monitor_disk.py --watch
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
-
-### v2.1 Advanced Usage
-
-```bash
-# Quick sample (estimate scan time) - NEW v2.0
-python skills/disk-cleaner/scripts/analyze_disk.py --sample --json
-
-# Progressive scanning (30-second limit) - NEW v2.0
-python skills/disk-cleaner/scripts/analyze_progressive.py --max-seconds 30
-
-# Progressive scanning (file limit) - NEW v2.0
-python skills/disk-cleaner/scripts/analyze_progressive.py --max-files 50000
-
-# Schedule automated cleanup (NEW v2.0)
-python skills/disk-cleaner/scripts/scheduler.py add "Daily Cleanup" /tmp 24h --type smart
-python skills/disk-cleaner/scripts/scheduler.py run  # Run due tasks
-
-# Platform-specific cleanup suggestions
-python -c "from diskcleaner.platforms import WindowsPlatform; import pprint; pprint.pprint(WindowsPlatform.get_system_maintenance_items())"
-```
-
-## Usage Examples
-
-### Example 1: Smart Cleanup with Duplicate Detection
-
-```python
-from diskcleaner.core import SmartCleanupEngine
-
-# Initialize engine
-engine = SmartCleanupEngine("/path/to/clean", cache_enabled=True)
-
-# Analyze directory
-report = engine.analyze(
-    include_duplicates=True,
-    safety_check=True
-)
-
-# Get summary
-print(engine.get_summary(report))
-
-# Interactive cleanup (if you want)
-from diskcleaner.core import InteractiveCleanupUI
-ui = InteractiveCleanupUI(report)
-ui.display_menu()  # Shows 5 view options
-```
-
-### Example 2: Automated Scheduling
-
-```bash
-# Add daily cleanup task
-python skills/disk-cleaner/scripts/scheduler.py add "Daily Temp Cleanup" /tmp 24h --type temp
-
-# List all scheduled tasks
-python skills/disk-cleaner/scripts/scheduler.py list
-
-# Run due tasks (dry-run by default)
-python skills/disk-cleaner/scripts/scheduler.py run
-
-# Run with actual deletion
-python skills/disk-cleaner/scripts/scheduler.py run --force
-```
-
-### Example 3: Platform-Specific Cleanup
-
-```python
-from diskcleaner.platforms import WindowsPlatform, LinuxPlatform, MacOSPlatform
-import platform
-
-if platform.system() == "Windows":
-    platform_impl = WindowsPlatform()
-elif platform.system() == "Linux":
-    platform_impl = LinuxPlatform()
-else:
-    platform_impl = MacOSPlatform()
-
-# Get platform-specific cleanup suggestions
-items = platform_impl.get_system_maintenance_items()
-for key, item in items.items():
-    print(f"{item['name']}: {item['description']}")
-    print(f"  Risk: {item['risk']}, Size: {item['size_hint']}")
-```
-
-## Installation
-
-### Quick Install (Recommended)
-
-Install directly from GitHub using Vercel's add-skill CLI:
-
-```bash
-npx add-skill gccszs/disk-cleaner -g
-```
-
-Replace `gccszs` with your actual GitHub username.
-
-### As a Claude Code Skill (Manual)
-
-1. Download `disk-cleaner.skill` from the [Releases](https://github.com/gccszs/disk-cleaner/releases) page
-2. Install via Claude Code:
-   ```
-   /skill install path/to/disk-cleaner.skill
-   ```
-
-### Standalone Usage
-
-```bash
-# Clone the repository
-git clone https://github.com/gccszs/disk-cleaner.git
-cd disk-cleaner
-
-# Scripts are ready to use (no dependencies needed)
-python skills/disk-cleaner/scripts/analyze_disk.py
-```
-
-## Usage Examples
-
-### Disk Space Analysis
-
-```bash
-# Analyze current drive (C:\ on Windows, / on Unix)
-python skills/disk-cleaner/scripts/analyze_disk.py
-
-# Analyze specific path
-python skills/disk-cleaner/scripts/analyze_disk.py --path "D:\Projects"
-
-# Get top 50 largest items
-python skills/disk-cleaner/scripts/analyze_disk.py --top 50
-
-# Output as JSON for automation
-python skills/disk-cleaner/scripts/analyze_disk.py --json
-
-# Save report to file
-python skills/disk-cleaner/scripts/analyze_disk.py --output disk_report.json
-```
-
-### Cleaning Junk Files
-
-**IMPORTANT**: Always run with `--dry-run` first to preview changes!
-
-```bash
-# Preview cleanup (recommended first step)
-python skills/disk-cleaner/scripts/clean_disk.py --dry-run
-
-# Actually clean files
-python skills/disk-cleaner/scripts/clean_disk.py --force
-
-# Clean specific categories
-python skills/disk-cleaner/scripts/clean_disk.py --temp       # Clean temp files only
-python skills/disk-cleaner/scripts/clean_disk.py --cache      # Clean cache only
-python skills/disk-cleaner/scripts/clean_disk.py --logs       # Clean logs only
-python skills/disk-cleaner/scripts/clean_disk.py --recycle    # Clean recycle bin only
-python skills/disk-cleaner/scripts/clean_disk.py --downloads 90  # Clean downloads older than 90 days
-```
-
-### Disk Monitoring
-
-```bash
-# Check current status
-python skills/disk-cleaner/scripts/monitor_disk.py
-
-# Continuous monitoring (every 60 seconds)
-python skills/disk-cleaner/scripts/monitor_disk.py --watch
-
-# Custom thresholds
-python skills/disk-cleaner/scripts/monitor_disk.py --warning 70 --critical 85
-
-# Alert mode (CI/CD friendly - exit codes based on status)
-python skills/disk-cleaner/scripts/monitor_disk.py --alerts-only
-
-# Custom monitoring interval (5 minutes)
-python skills/disk-cleaner/scripts/monitor_disk.py --watch --interval 300
-```
-
-## Scripts Reference
-
-### `analyze_disk.py`
-
-Disk space analysis tool with progressive scanning support (v2.0+).
-
-**New in v2.0:**
-- **Quick Sample Mode** (`--sample`): 1-second estimation of scan time
-- **Smart Limits**: Default 50,000 files, 30 seconds for large disks
-- **Progressive Display**: Real-time feedback during scanning
-- **Auto-Sampling**: Automatically suggests scan mode based on disk size
-
-**Capabilities:**
-- Scan directories to find largest files and folders
-- Analyze temporary file locations
-- Calculate disk usage statistics
-- Generate detailed reports
-
-### `analyze_progressive.py` (NEW v2.0)
-
-Progressive scanning tool specifically designed for large disks.
-
-**Features:**
-- **Quick Sample** (`--sample`): 1-second estimation
-- **Progressive Scan** (`--max-seconds`): Get results in 30 seconds
-- **File Limit** (`--max-files`): Limit scan to specific file count
-- **Real-Time Progress**: Updates every 2 seconds
-- **Interruptible**: Press Ctrl+C for partial results
-
-**Usage:**
-```bash
-# Quick sample
-python skills/disk-cleaner/scripts/analyze_progressive.py --sample
-
-# 30-second progressive scan
-python skills/disk-cleaner/scripts/analyze_progressive.py --max-seconds 30
-
-# Limit file count
-python skills/disk-cleaner/scripts/analyze_progressive.py --max-files 50000
-```
-
-### `check_skill.py` (NEW v2.0)
-
-Diagnostic tool to verify skill package functionality.
-
-**Checks:**
-- Python version and platform
-- File structure integrity
-- Module imports
-- File permissions
-- Script execution
-
-**Usage:**
-```bash
-python skills/disk-cleaner/scripts/check_skill.py
-```
-
-### `skill_bootstrap.py` (NEW v2.0)
-
-Intelligent bootstrap module for automatic environment setup.
-
-**Features:**
-- Auto-detects skill package location (20+ locations)
-- Automatically imports diskcleaner modules
-- Cross-platform encoding handling
-- Graceful fallbacks for errors
-
-**Usage:**
-```python
-from skill_bootstrap import import_diskcleaner_modules
-
-success, modules = import_diskcleaner_modules()
-if success:
-    ProgressBar = modules['ProgressBar']
-    DirectoryScanner = modules['DirectoryScanner']
-```
-
-### `clean_disk.py`
-
-Safe junk file removal with multiple safety mechanisms.
-
-**Safety Features:**
-- Protected paths (never deletes system directories)
-- Protected extensions (never deletes executables)
-- Dry-run mode by default
-- Detailed logging of all operations
-
-**Categories Cleaned:**
-- **temp**: Temporary files (%TEMP%, /tmp, etc.)
-- **cache**: Application and browser caches
-- **logs**: Log files (older than 30 days default)
-- **recycle**: Recycle bin / trash
-- **downloads**: Old download files (configurable age)
-
-### `monitor_disk.py`
-
-Continuous or one-shot disk usage monitoring.
-
-**Features:**
-- Multi-drive monitoring (all mount points)
-- Configurable warning/critical thresholds
-- Continuous monitoring mode with alerts
-- JSON output for automation
-- Non-zero exit codes for CI/CD integration
-
-**Exit Codes:**
-- `0`: All drives OK
-- `1`: Warning threshold exceeded
-- `2`: Critical threshold exceeded
-
-## Platform Support
-
-| Feature | Windows | Linux | macOS |
-|---------|---------|-------|-------|
-| Disk Analysis | ✅ | ✅ | ✅ |
-| Progressive Scanning (NEW) | ✅ | ✅ | ✅ |
-| Quick Sample Mode (NEW) | ✅ | ✅ | ✅ |
-| Temp Cleaning | ✅ | ✅ | ✅ |
-| Cache Cleaning | ✅ | ✅ | ✅ |
-| Log Cleaning | ✅ | ✅ | ✅ |
-| Recycle Bin | ✅ | ✅ | ✅ |
-| Real-time Monitoring | ✅ | ✅ | ✅ |
-| GBK Console Support (NEW) | ✅ | N/A | N/A |
-| UTF-8 Console Support | ✅ | ✅ | ✅ |
-
-### Windows-Specific Locations
-- `%TEMP%`, `%TMP%`, `%LOCALAPPDATA%\Temp`
-- `C:\Windows\Temp`, `C:\Windows\Prefetch`
-- `C:\Windows\SoftwareDistribution\Download`
-- Browser caches (Chrome, Edge, Firefox)
-- Development tool caches (npm, pip, Gradle, Maven)
-
-### Linux-Specific Locations
-- `/tmp`, `/var/tmp`, `/var/cache`
-- Package manager caches (apt, dnf, pacman)
-- Browser caches
-- Development tool caches
-
-### macOS-Specific Locations
-- `/tmp`, `/private/tmp`, `/var/folders`
-- `~/Library/Caches`, `~/Library/Logs`
-- iOS device backups
-- Homebrew cache
-
-## Safety Features
-
-### Protected Paths
-System directories are never touched:
-- Windows: `C:\Windows`, `C:\Program Files`, `C:\ProgramData`
-- Linux/macOS: `/usr`, `/bin`, `/sbin`, `/System`, `/Library`
-
-### Protected Extensions
-Executables and system files are protected:
-```
-.exe, .dll, .sys, .drv, .bat, .cmd, .ps1, .sh, .bash, .zsh,
-.app, .dmg, .pkg, .deb, .rpm, .msi, .iso, .vhd, .vhdx
-```
-
-## Use Cases
-
-### 1. Free Up C Drive Space on Windows
-```bash
-# Analyze what's taking space
-python skills/disk-cleaner/scripts/analyze_disk.py
-
-# Preview cleanup
-python skills/disk-cleaner/scripts/clean_disk.py --dry-run
-
-# Execute cleanup
-python skills/disk-cleaner/scripts/clean_disk.py --force
-```
-
-### 2. Automated Disk Monitoring
-```bash
-# Run in background with custom thresholds
-python skills/disk-cleaner/scripts/monitor_disk.py --watch --warning 70 --critical 85 --interval 300
-```
-
-### 3. CI/CD Integration
-```bash
-# Check disk space in pipeline
-python skills/disk-cleaner/scripts/monitor_disk.py --alerts-only --json
-
-# Exit codes: 0=OK, 1=WARNING, 2=CRITICAL
-if [ $? -ne 0 ]; then
-  echo "Disk space issue detected!"
-fi
-```
-
-## Development
-
-### Project Structure
-```
-disk-cleaner/
-├── skills/                   # Skills marketplace directory
-│   └── disk-cleaner/
-│       ├── SKILL.md          # Complete skill guide (v2.0)
-│       ├── ENCODING_FIX_SUMMARY.md    # Encoding fix documentation (NEW)
-│       ├── PROGRESSIVE_SCAN_SUMMARY.md # Progressive scanning guide (NEW)
-│       ├── UNIVERSAL_INSTALL.md       # Universal installation guide (NEW)
-│       ├── NO_PYTHON_GUIDE.md         # Guide for users without Python (NEW)
-│       ├── FIXES.md                  # v2.0 fixes list (NEW)
-│       ├── AGENT_QUICK_REF.txt       # Agent quick reference (NEW)
-│       ├── README.md         # Skill documentation
-│       ├── diskcleaner.skill # Self-contained skill package (v2.0)
-│       ├── scripts/          # Executable scripts
-│       │   ├── analyze_disk.py       # Enhanced with progressive scanning
-│       │   ├── analyze_progressive.py # NEW: Progressive scanning
-│       │   ├── clean_disk.py          # Safe cleanup
-│       │   ├── monitor_disk.py        # Disk monitoring
-│       │   ├── scheduler.py           # Automated scheduling
-│       │   ├── check_skill.py         # NEW: Diagnostic tool
-│       │   ├── skill_bootstrap.py     # NEW: Intelligent bootstrap
-│       │   └── package_skill.py       # Package creation tool
-│       ├── diskcleaner/      # Core Python module (self-contained)
-│       │   ├── core/         # Core functionality
-│       │   ├── optimization/ # Performance optimizations (v2.0)
-│       │   ├── platforms/    # Platform-specific code
-│       │   └── config/       # Configuration
-│       └── references/       # Reference documentation
-│           └── temp_locations.md
-├── tests/                    # Test suite (244 tests)
-└── docs/                     # Additional documentation
-```
-
-### Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Disclaimer
-
-This tool modifies files on your system. Always:
-1. Review the dry-run output before actual cleaning
-2. Backup important data before cleanup
-3. Use at your own risk
-
-The authors are not responsible for any data loss or system issues.
-
-## Acknowledgments
-
-- Built as a [Claude Code Skill](https://claude.com/claude-code)
-- Installable via [Vercel's add-skill CLI](https://github.com/vercel/vercel/tree/main/packages/add-skill)
-- Cross-platform compatibility tested on Windows 10/11, Ubuntu 20.04+, macOS 12+
