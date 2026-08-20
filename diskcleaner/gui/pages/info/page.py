@@ -10,7 +10,9 @@ BACK_BUTTON_TEXT = "Back"
 
 
 def _title_font(scale: float | None = None):
-    return get_font(FontFamily.PLAY_REGULAR, styles.TITLE_FONT_PT, role="headline_small", scale=scale)
+    return get_font(
+        FontFamily.PLAY_REGULAR, styles.TITLE_FONT_PT, role="headline_small", scale=scale
+    )
 
 
 def _body_font(scale: float | None = None):
