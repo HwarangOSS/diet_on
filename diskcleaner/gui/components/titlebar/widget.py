@@ -25,6 +25,8 @@ class TitleBar(QWidget):
     minimize_requested = Signal()
     close_requested = Signal()
     menu_requested = Signal()
+    help_requested = Signal()
+    license_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -75,8 +77,8 @@ class TitleBar(QWidget):
         self.menu_button.clicked.connect(self._toggle_more_menu)
 
         self.more_menu.theme_toggle_requested.connect(self.menu_requested.emit)
-        self.more_menu.help_requested.connect(lambda: print("[DEBUG] 도움말 클릭"))
-        self.more_menu.license_requested.connect(lambda: print("[DEBUG] 라이센스 클릭"))
+        self.more_menu.help_requested.connect(self.help_requested.emit)
+        self.more_menu.license_requested.connect(self.license_requested.emit)
 
         self._apply_responsive_size()
 

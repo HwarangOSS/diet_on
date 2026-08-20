@@ -1,5 +1,4 @@
-﻿import os
-import sys
+﻿import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -15,8 +14,10 @@ from diskcleaner.gui.pages.complete import CompletePage
 from diskcleaner.gui.pages.delete_detail import DeletePage
 from diskcleaner.gui.pages.duplicate_detail import DuplicatePage
 from diskcleaner.gui.pages.home import HomePage
+from diskcleaner.gui.pages.info import InfoPage
 from diskcleaner.gui.pages.loading import LoadingPage
 from diskcleaner.gui.pages.result import CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
+from diskcleaner.gui.paths import asset_path
 from diskcleaner.gui.result_mapping import (
     remove_deleted_paths,
     report_to_delete_files,
@@ -32,10 +33,43 @@ PROGRESS_TICK_MS = 200
 PROGRESS_TICK_STEP = 3
 PROGRESS_TICK_CAP = 90
 
+HELP_TITLE = "도움말"
+HELP_TEXT = """실행 방법
 
-def resource_path(relative_path: str) -> str:
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
+1. 스캔할 경로 선택 (기본값: 사용자 홈 디렉토리, 전체 드라이브는 시간이 오래 걸려 권장하지 않음)
+2. 스캔 시작 → 파일 분석 완료까지 대기
+3. 결과 화면에서 안전 삭제 대상 / 중복 파일 / AI 분석 대상 확인
+4. 원클릭 일괄 삭제 또는 상세 화면에서 개별 선택 후 삭제
+
+AI 삭제 권장 기능을 쓰려면 ANTHROPIC_API_KEY 환경변수가 설정되어 있어야 합니다.
+설정하지 않아도 실행은 되며, 이 경우 기본 규칙 기반 권장만 제공됩니다."""
+
+LICENSE_TITLE = "라이센스"
+LICENSE_TEXT = """이 프로그램(DietOn)은 gccszs/disk-cleaner 프로젝트를 포크하여 제작되었습니다.
+원본 프로젝트 및 본 프로그램 모두 MIT License를 따릅니다.
+
+MIT License
+
+Copyright (c) 2025 Disk Cleaner Contributors
+Copyright (c) 2026 HwarangOSS (DietOn)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE."""
 
 
 class _AnalysisBridge(QObject):
@@ -61,7 +95,7 @@ def main():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(resource_path("assets/icon/icon.ico")))
+    app.setWindowIcon(QIcon(asset_path("icon", "icon.ico")))
 
     window = MainWindow()
     window.setWindowTitle("DietOn")
@@ -83,6 +117,7 @@ def main():
     delete_detail = DeletePage()
     duplicate_detail = DuplicatePage()
     complete = CompletePage()
+    info_page = InfoPage()
 
     stack.addWidget(home)
     stack.addWidget(loading)
@@ -90,6 +125,7 @@ def main():
     stack.addWidget(delete_detail)
     stack.addWidget(duplicate_detail)
     stack.addWidget(complete)
+    stack.addWidget(info_page)
 
     root_layout.addWidget(stack)
 
@@ -102,6 +138,7 @@ def main():
         "report": None,
         "plan": None,
         "scan_path": None,
+        "pre_info_widget": None,
     }
     deletion_manager = DeletionManager()
 
@@ -216,6 +253,17 @@ def main():
     def on_complete_result_requested():
         stack.setCurrentWidget(result)
 
+    def go_to_info(title: str, body: str):
+        current = stack.currentWidget()
+        if current is not info_page:
+            state["pre_info_widget"] = current
+        info_page.set_content(title, body)
+        info_page.update_responsive_size(window.width())
+        stack.setCurrentWidget(info_page)
+
+    def on_info_back_requested():
+        stack.setCurrentWidget(state["pre_info_widget"] or home)
+
     home.scan_requested.connect(go_to_loading)
     result.card_clicked.connect(go_to_detail)
     delete_detail.delete_requested.connect(on_delete_target_delete_requested)
@@ -223,6 +271,9 @@ def main():
     delete_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
     duplicate_detail.back_requested.connect(lambda: stack.setCurrentWidget(result))
     complete.result_requested.connect(on_complete_result_requested)
+    info_page.back_requested.connect(on_info_back_requested)
+    titlebar.help_requested.connect(lambda: go_to_info(HELP_TITLE, HELP_TEXT))
+    titlebar.license_requested.connect(lambda: go_to_info(LICENSE_TITLE, LICENSE_TEXT))
 
     is_dark = load_dark_mode()
 
@@ -237,6 +288,7 @@ def main():
         delete_detail.apply_theme(dark=is_dark)
         duplicate_detail.apply_theme(dark=is_dark)
         complete.apply_theme(dark=is_dark)
+        info_page.apply_theme(dark=is_dark)
         save_dark_mode(is_dark)
 
     titlebar.menu_requested.connect(toggle_theme)
@@ -249,6 +301,7 @@ def main():
     delete_detail.apply_theme(dark=is_dark)
     duplicate_detail.apply_theme(dark=is_dark)
     complete.apply_theme(dark=is_dark)
+    info_page.apply_theme(dark=is_dark)
 
     # 폰트 연결
     set_global_scale(window.width())
@@ -259,6 +312,7 @@ def main():
     window.font_scale_changed.connect(delete_detail.refresh_fonts)
     window.font_scale_changed.connect(duplicate_detail.refresh_fonts)
     window.font_scale_changed.connect(complete.refresh_fonts)
+    window.font_scale_changed.connect(info_page.refresh_fonts)
     home.refresh_fonts()
     loading.refresh_fonts()
     titlebar.refresh_fonts()
@@ -266,6 +320,7 @@ def main():
     delete_detail.refresh_fonts()
     duplicate_detail.refresh_fonts()
     complete.refresh_fonts()
+    info_page.refresh_fonts()
     result.update_responsive_size(window.width())
 
     window.show()

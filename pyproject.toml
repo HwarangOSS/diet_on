@@ -30,6 +30,7 @@ classifiers = [
 dependencies = [
     "PySide6>=6.6",
     "send2trash>=1.8",
+    "python-dotenv>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +38,7 @@ llm = [
     "anthropic>=0.77",
 ]
 dev = [
+    "pyinstaller>=6.0",
     "pytest>=7.0",
     "pytest-cov>=3.0",
     "pytest-benchmark>=4.0",
@@ -144,15 +146,9 @@ per-file-ignores = [
     "diskcleaner/core/organizer.py:F401,F541",
     "diskcleaner/core/rules/archive_rules.py:F401,E731",
     "diskcleaner/platforms/windows.py:F841",
-    "scripts/organize_files.py:E402",
-    "test_cache_detection.py:E402,E722,E501",
-    "test_emergency_fixes.py:F401,F541",
-    "test_new_features.py:F541,F401",
     "tests/test_archive_rules.py:F401,E402",
-    "tests/test_organize_cli.py:F401",
     "tests/test_organizer.py:F401,E402",
     "tests/test_llm_advisor.py:E402",
-    "examples/archive_demo.py:E402,F541",
     "diskcleaner/gui/components/power_button/icons.py:E501",
     "diskcleaner/gui/components/titlebar/icons.py:E501",
     "diskcleaner/gui/components/status_card/icons.py:E501",
