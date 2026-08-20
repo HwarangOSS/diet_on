@@ -1,5 +1,4 @@
-﻿import os
-import sys
+﻿import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,6 +17,7 @@ from diskcleaner.gui.pages.home import HomePage
 from diskcleaner.gui.pages.info import InfoPage
 from diskcleaner.gui.pages.loading import LoadingPage
 from diskcleaner.gui.pages.result import CATEGORY_DELETE_TARGET, CATEGORY_DUPLICATE, ResultPage
+from diskcleaner.gui.paths import asset_path
 from diskcleaner.gui.result_mapping import (
     remove_deleted_paths,
     report_to_delete_files,
@@ -36,7 +36,7 @@ PROGRESS_TICK_CAP = 90
 HELP_TITLE = "도움말"
 HELP_TEXT = """실행 방법
 
-1. 스캔할 경로 선택 (기본값: 시스템 드라이브 루트)
+1. 스캔할 경로 선택 (기본값: 사용자 홈 디렉토리, 전체 드라이브는 시간이 오래 걸려 권장하지 않음)
 2. 스캔 시작 → 파일 분석 완료까지 대기
 3. 결과 화면에서 안전 삭제 대상 / 중복 파일 / AI 분석 대상 확인
 4. 원클릭 일괄 삭제 또는 상세 화면에서 개별 선택 후 삭제
@@ -72,11 +72,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE."""
 
 
-def resource_path(relative_path: str) -> str:
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
-
-
 class _AnalysisBridge(QObject):
     def __init__(self, on_finished, on_error):
         super().__init__()
@@ -100,7 +95,7 @@ def main():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(resource_path("assets/icon/icon.ico")))
+    app.setWindowIcon(QIcon(asset_path("icon", "icon.ico")))
 
     window = MainWindow()
     window.setWindowTitle("DietOn")

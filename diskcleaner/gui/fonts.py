@@ -2,7 +2,9 @@ import os
 
 from PySide6.QtGui import QFontDatabase
 
-FONT_DIR = os.path.join(os.path.dirname(__file__), "assets", "fonts")
+from diskcleaner.gui.paths import asset_path
+
+FONT_DIR = asset_path("fonts")
 
 # 폰트 매핑
 _FONT_FILES = {

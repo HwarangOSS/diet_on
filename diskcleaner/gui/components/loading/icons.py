@@ -6,9 +6,11 @@ from PySide6.QtCore import QByteArray, QRectF, Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 
+from diskcleaner.gui.paths import asset_path
+
 ICON_SIZE = 140
 
-SVG_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "svgs")
+SVG_DIR = asset_path("svgs")
 _REFERENCE_ASPECT_FILE = "file2.svg"
 _reference_aspect: float | None = None
 
