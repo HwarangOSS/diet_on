@@ -1,5 +1,4 @@
 import os
-import platform
 from pathlib import Path
 
 from PySide6.QtCore import QRectF, Qt, Signal
@@ -12,8 +11,7 @@ from diskcleaner.gui.typo import body_md, headline, path_quote, rem
 
 from . import styles
 
-_DEFAULT_ROOT_PATH = "C:\\" if platform.system() == "Windows" else str(Path.home())
-DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or _DEFAULT_ROOT_PATH
+DEFAULT_SCAN_PATH = os.environ.get("DIETON_SCAN_PATH") or str(Path.home())
 
 SUB_TEXT = "안의 불필요한 파일을\n한번에 간편하게 정리해요"
 
