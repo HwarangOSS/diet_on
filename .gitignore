@@ -78,3 +78,9 @@ performance_progress_improvement.md
 # Claude Code temporary files
 C:/Users/*/AppData/Local/Temp/claude/
 /tmp/claude/
+
+# DietOn build output (배포는 GitHub Release로, 소스 저장소에 커밋 금지)
+DietOn_v1.0/
+*.exe
+*.zip
+*.lnk
