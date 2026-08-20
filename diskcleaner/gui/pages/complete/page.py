@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWi
 
 from diskcleaner.gui.components.loading import icons as loading_icons
 from diskcleaner.gui.components.side_action_button import SideActionButton
-from diskcleaner.gui.typo import body_md, headline, rem
+from diskcleaner.gui.typo import headline, rem
 
 from . import styles
 
@@ -48,26 +48,7 @@ class CompletePage(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.title_label)
 
-        layout.addSpacing(0)
-        self._title_gap = layout.itemAt(layout.count() - 1).spacerItem()
-        self.summary_label = QLabel()
-        self.summary_label.setObjectName("completeSummary")
-        self.summary_label.setFont(body_md())
-        self.summary_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.summary_label)
-
         self._apply_responsive_size(styles.REFERENCE_WIDTH)
-
-    # API
-    def set_result(self, deleted_count: int, size_freed_bytes: int):
-        if deleted_count <= 0:
-            self.summary_label.setText("")
-            return
-        if size_freed_bytes >= 1024**3:
-            size_text = f"{size_freed_bytes / (1024 ** 3):.1f}GB"
-        else:
-            size_text = f"{size_freed_bytes / (1024 ** 2):.0f}MB"
-        self.summary_label.setText(f"{deleted_count}개 파일 삭제 · {size_text} 확보")
 
     def apply_theme(self, dark: bool):
         self.result_button.set_dark(dark)
@@ -75,9 +56,6 @@ class CompletePage(QWidget):
     def _apply_responsive_size(self, container_width: int):
         self._icon_gap.changeSize(
             0, rem(styles.ICON_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
-        )
-        self._title_gap.changeSize(
-            0, rem(styles.TITLE_GAP_REM), QSizePolicy.Minimum, QSizePolicy.Fixed
         )
         self._layout.invalidate()
 
@@ -95,7 +73,6 @@ class CompletePage(QWidget):
 
     def refresh_fonts(self):
         self.title_label.setFont(headline())
-        self.summary_label.setFont(body_md())
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
