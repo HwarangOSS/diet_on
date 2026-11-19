@@ -1,4 +1,5 @@
 # DietOn
+[![논문 다운로드](https://github.com/HwarangOSS/diet_on/releases/download/paper-v1.0/DietOn.A.PC.Cleaner.Combining.Rule-Based.Classification.pdf)
 
 ![DietOn 미리보기](docs/images/dieton-preview.png)
 
